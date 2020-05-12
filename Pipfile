@@ -9,6 +9,8 @@ verify_ssl = true
 setuptools = "*"
 osmnx = "*"
 rtree = "*"
+geopandas = "*"
+fiona = "*"
 
 [requires]
 python_version = "3.8"
