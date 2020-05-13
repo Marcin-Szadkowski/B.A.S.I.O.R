@@ -1,5 +1,7 @@
 import socket
 import time
+import json
+import pickle
 from threading import Thread
 
 
@@ -11,7 +13,7 @@ class ClientHandler(Thread):
         self.Logic = logic
 
     def message_to_client(self, mess):  # In future JSON will be sent, so must add serialization
-        self.ClientSocket.send(bytes(mess, 'utf-8'))
+        self.ClientSocket.send(pickle.dumps(mess))
 
     def message_to_logic(self, mess):  # Pushes Client message to LogicConnector
         self.Logic.push(mess)
@@ -30,7 +32,7 @@ class ClientHandler(Thread):
         while True:
 
             try:
-                mess = self.ClientSocket.recv(1024).decode("utf-8")  # TODO: check precisely if queueing in socket communication needed!
+                mess = pickle.loads(self.ClientSocket.recv(1024))  # TODO: check precisely if queueing in socket communication needed!
                 is_received = True
             except socket.error:
                 is_received = False

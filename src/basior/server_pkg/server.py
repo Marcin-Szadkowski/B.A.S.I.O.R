@@ -6,7 +6,7 @@ from .client_handler import ClientHandler
 
 
 class Server(Thread):
-    def __init__(self, port):  # Initiate server_pkg
+    def __init__(self, port):  # Initiate server
         super(Server, self).__init__()
 
         self.ServerSocket = socket.socket()

@@ -1,5 +1,7 @@
 import socket
 import time
+import json
+import pickle
 from threading import Thread
 
 
@@ -9,12 +11,12 @@ class Client(Thread):
         self.Socket = socket.socket()
         self.ip = ip
         self.port = port
-        self.changes = []   # Queue of server_pkg communicates. To be modified in future?
+        self.changes = []  # Queue of server_pkg communicates. To be modified in future?
 
     def message_to_server(self, mess):  # Sends message to server_pkg, used by UserInterface(?)
-        self.Socket.send(bytes(mess, 'utf-8'))  # In future JSON will be sent, so must add serialization
+        self.Socket.send(pickle.dumps(mess))  # In future JSON will be sent, so must add serialization
 
-    def check_changes(self):    # Used by UserInterface(?) to get changes which were sent by ClientHandler
+    def check_changes(self):  # Used by UserInterface(?) to get changes which were sent by ClientHandler
         if len(self.changes) > 0:
             temp = self.changes.copy()
             self.changes = []
@@ -29,7 +31,7 @@ class Client(Thread):
 
         while True:
             try:
-                server_mess = self.Socket.recv(1024).decode("utf-8")    # TODO: check precisely if queueing in socket communication needed!
+                server_mess = pickle.loads(self.Socket.recv(1024))  # TODO: check precisely if queueing in socket communication needed!
                 is_received = True
             except socket.error:
                 is_received = False
@@ -42,7 +44,7 @@ class Client(Thread):
         Socket.close()
 
 
-def run():                                     # Function used for testing
+def run():  # Function used for testing
     TestClient = Client(2137, '127.0.0.1')
     TestClient.start()
 

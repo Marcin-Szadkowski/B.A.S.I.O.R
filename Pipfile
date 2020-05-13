@@ -11,6 +11,8 @@ osmnx = "*"
 rtree = "*"
 geopandas = "*"
 fiona = "*"
+pykafka = "*"
+pyscaffold = "*"
 
 [requires]
 python_version = "3.8"
