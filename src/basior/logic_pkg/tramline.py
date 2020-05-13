@@ -17,10 +17,11 @@ class TramLine(object):
         self.defult_route = dl.load_single_line(number, direction_to)  # As you can default_route is type LineString
         self.current_route = self.defult_route
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
-        self.deleted_edges = [] # List of deleted edges from defult route
+        self.deleted_edges = []  # List of deleted edges from defult route
 
     def show(self, with_stops=True):
         """Development tool. Plot line"""
         plt.plot(self.current_route.xy[0], self.current_route.xy[1])
         if with_stops:
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
+        plt.show()

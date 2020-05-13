@@ -1,9 +1,11 @@
 import geopandas as gpd
+from shapely.geometry import LineString
+from pandas import Series
 
 
 class DataLoader(object):
     """Class loads data from geojson files"""
-    all_lines_data = "data/all_lines_data.geojson"  # Path of .geojson file with tram related data from OSM
+    all_lines_data = "export.geojson"  # Path of .geojson file with tram related data from OSM
 
     def __init__(self):
         """
@@ -31,8 +33,31 @@ class DataLoader(object):
     def load_tram_stops(self, tram_line):
         """
         See https://shapely.readthedocs.io/en/latest/manual.html#binary-predicates -> Binary Predicates
+        :param tram_line LineString or pandas Series
         :returns list of stops on given tram line (list of shapely.Point objects)
         """
-        contained = filter(tram_line.intersects, list(self.gdf_stops.geometry))
-        stops_points = [p for p in contained]
-        return stops_points
+        if isinstance(tram_line, LineString):
+            contained = filter(tram_line.intersects, list(self.gdf_stops.geometry))
+            stops_points = [p for p in contained]
+            return stops_points
+        elif isinstance(tram_line, Series):
+            contained = filter(tram_line.geometry.iloc[0].intersects, list(self.gdf_stops.geometry))
+            stops_points = [p for p in contained]
+            return stops_points
+
+    def fix_edges_geometry(self, graph):
+        """
+        It unifies edges from graph - simplifies further analyze
+        Very short edges from osmnx graph has no 'geometry' property
+        This method adds 'geometry' to these edges - added 'geometry' is straight LINESTRING
+        :param graph:
+        :return:
+        """
+        for edge1 in graph.edges(data=True):
+            try:
+                line = edge1[2]['geometry']
+            except KeyError:
+                point1 = graph.nodes[edge1[0]]
+                point2 = graph.nodes[edge1[1]]
+                new_linestring = LineString([(point1['x'], point1['y'],), (point2['x'], point2['y'])])
+                edge1[2]['geometry'] = new_linestring
