@@ -14,7 +14,7 @@ class Client(Thread):
         self.changes = []  # Queue of server_pkg communicates. To be modified in future?
 
     def message_to_server(self, mess):  # Sends message to server_pkg, used by UserInterface(?)
-        self.Socket.send(pickle.dumps(mess))  # In future JSON will be sent, so must add serialization
+        self.Socket.send(pickle.dumps(mess))
 
     def check_changes(self):  # Used by UserInterface(?) to get changes which were sent by ClientHandler
         if len(self.changes) > 0:

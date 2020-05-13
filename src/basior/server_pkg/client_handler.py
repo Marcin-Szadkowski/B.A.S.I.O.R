@@ -12,7 +12,7 @@ class ClientHandler(Thread):
         self.ClientSocket.setblocking(False)
         self.Logic = logic
 
-    def message_to_client(self, mess):  # In future JSON will be sent, so must add serialization
+    def message_to_client(self, mess):
         self.ClientSocket.send(pickle.dumps(mess))
 
     def message_to_logic(self, mess):  # Pushes Client message to LogicConnector
