@@ -12,6 +12,7 @@ rtree = "*"
 geopandas = "*"
 fiona = "*"
 pyscaffold = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.8"
