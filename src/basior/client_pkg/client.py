@@ -16,6 +16,10 @@ class Client(Thread):
     def message_to_server(self, mess):  # Sends message to server_pkg, used by UserInterface(?)
         self.Socket.send(pickle.dumps(mess))
 
+    def end_connection(self):
+        self.message_to_server("END")
+        self.Socket.close()
+
     def check_changes(self):  # Used by UserInterface(?) to get changes which were sent by ClientHandler
         if len(self.changes) > 0:
             temp = self.changes.copy()
@@ -41,8 +45,6 @@ class Client(Thread):
 
             time.sleep(0.001)
 
-        Socket.close()
-
 
 def run():  # Function used for testing
     TestClient = Client(2137, '127.0.0.1')
@@ -51,11 +53,12 @@ def run():  # Function used for testing
     time.sleep(1)
     TestClient.message_to_server('START')
 
-    for i in range(10):
-        TestClient.message_to_server(str(i))
-        time.sleep(5)
+    for i in range(5):
+        TestClient.message_to_server(json.loads('{ "command": "removed", "x": "6", "y": "9"}'))
+        time.sleep(2)
         print(TestClient.check_changes())
 
+    TestClient.end_connection()
     TestClient.join()
 
 

@@ -8,12 +8,15 @@ from .client_handler import ClientHandler
 class Server(Thread):
     def __init__(self, port):  # Initiate server
         super(Server, self).__init__()
-
+        # self.handler_list = []
         self.ServerSocket = socket.socket()
         self.ServerSocket.bind(('', port))
 
     def connect_user(self):  # Waits for incoming connection, and connects new user
         return self.ServerSocket.accept()
+
+    def kill_server(self):
+        self.ServerSocket.close()
 
     def run(self):
         self.ServerSocket.listen(5)
@@ -24,8 +27,6 @@ class Server(Thread):
             player.start()
 
             time.sleep(1)
-
-        Socket.close()
 
 
 def run():  # Function used for testing

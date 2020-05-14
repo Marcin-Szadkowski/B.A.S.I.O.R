@@ -9,7 +9,7 @@ class LogicConnector(Thread):  # Mock object to test communication
         self.State = True
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
-        print('Logic got: ' + message)
+        print('Logic got: ', message)
 
     def get_state(self):  # Used by ClientHandler to determine if there is any change in game, which i supposed to be send to Client
         return self.State
