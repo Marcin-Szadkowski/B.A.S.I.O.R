@@ -31,7 +31,7 @@ class Client(Thread):
 
         while True:
             try:
-                server_mess = pickle.loads(self.Socket.recv(1024))  # TODO: check precisely if queueing in socket communication needed!
+                server_mess = pickle.loads(self.Socket.recv(2048))
                 is_received = True
             except socket.error:
                 is_received = False

@@ -32,7 +32,7 @@ class ClientHandler(Thread):
         while True:
 
             try:
-                mess = pickle.loads(self.ClientSocket.recv(1024))  # TODO: check precisely if queueing in socket communication needed!
+                mess = pickle.loads(self.ClientSocket.recv(2048))
                 is_received = True
             except socket.error:
                 is_received = False
