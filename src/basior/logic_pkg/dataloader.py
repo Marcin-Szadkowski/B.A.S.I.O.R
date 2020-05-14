@@ -1,11 +1,13 @@
 import geopandas as gpd
 from shapely.geometry import LineString
 from pandas import Series
+import pkg_resources
+import os
 
 
 class DataLoader(object):
     """Class loads data from geojson files"""
-    all_lines_data = "export.geojson"  # Path of .geojson file with tram related data from OSM
+    all_lines_data = os.path.join(pkg_resources.resource_filename(__package__, "data"), "all_tram_lines.geojson")  # Path of .geojson file with tram related data from OSM
 
     def __init__(self):
         """

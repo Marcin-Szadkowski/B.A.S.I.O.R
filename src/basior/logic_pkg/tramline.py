@@ -1,4 +1,3 @@
-from dataloader import DataLoader
 import matplotlib.pyplot as plt
 
 

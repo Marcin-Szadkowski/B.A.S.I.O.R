@@ -13,6 +13,7 @@ geopandas = "*"
 fiona = "*"
 pyscaffold = "*"
 matplotlib = "*"
+geojson = "*"
 
 [requires]
 python_version = "3.8"

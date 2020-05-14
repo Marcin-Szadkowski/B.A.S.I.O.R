@@ -53,9 +53,9 @@ def run():  # Function used for testing
     time.sleep(1)
     TestClient.message_to_server('START')
 
-    for i in range(5):
-        TestClient.message_to_server(json.loads('{ "command": "removed", "x": "6", "y": "9"}'))
-        time.sleep(2)
+    while True:
+        # TestClient.message_to_server(json.loads('{ "command": "removed", "x": "6", "y": "9"}'))
+        time.sleep(1)
         print(TestClient.check_changes())
 
     TestClient.end_connection()
