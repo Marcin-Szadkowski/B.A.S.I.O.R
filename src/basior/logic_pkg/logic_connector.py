@@ -16,15 +16,16 @@ class LogicConnector(Thread):
 
     def load_data(self):
         Loader = DataLoader()
+        all_trams_data = Loader.load_all_lines()
+        print(all_trams_data)
 
-        self.trams.append(TramLine("33", "Sępolno", Loader))
-        self.trams.append(TramLine("11", "Kromera", Loader))
+        for elem in all_trams_data:
+            self.trams.append(TramLine(str(elem[0]), str(elem[1]), Loader))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
         print('Logic got: ', message)
 
-    def get_state(
-            self):  # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
+    def get_state(self):  # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
         return self.State
 
     def get_changes(self):  # Used by ClientHandler to get changelog of simulation state in order to deliver it to Client

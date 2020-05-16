@@ -1,5 +1,6 @@
 import geopandas as gpd
 from shapely.geometry import LineString
+import pandas as pd
 from pandas import Series
 import pkg_resources
 import os
@@ -8,6 +9,7 @@ import os
 class DataLoader(object):
     """Class loads data from geojson files"""
     all_lines_data = os.path.join(pkg_resources.resource_filename(__package__, "data"), "all_tram_lines.geojson")  # Path of .geojson file with tram related data from OSM
+    lines_to_load = os.path.join(pkg_resources.resource_filename(__package__, "data"), "lines_to_load.csv") # Path of .cvs file with trams to load
 
     def __init__(self):
         """
@@ -31,6 +33,13 @@ class DataLoader(object):
             return line
         else:
             return None
+
+    def load_all_lines(self):   # Returns table of all tram lines as list of lists in format: [number, direction]
+        data = pd.read_csv(self.lines_to_load)
+        data_table = data.loc[0:].to_numpy()
+
+        return data_table
+
 
     def load_tram_stops(self, tram_line):
         """
