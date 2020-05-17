@@ -16,6 +16,21 @@
    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
    crossorigin=""></script>
     <!-- END LEAFLET -->
+        <styles>
+
+            .leaflet-div-icon {
+	background: transparent;
+	border: none;
+}
+
+.leaflet-marker-icon .number{
+	position: relative;
+	top: -37px;
+	font-size: 12px;
+	width: 25px;
+	text-align: center;
+}
+        </styles>
     </head>
     <body>
          <header>
@@ -141,10 +156,10 @@
 
 /* skrypt na numerowane markery*/
 
-     L.NumberedDivIcon = L.Icon.extend({
+L.NumberedDivIcon = L.Icon.extend({
 	options: {
     // EDIT THIS TO POINT TO THE FILE AT http://www.charliecroom.com/marker_hole.png (or your own marker)
-    iconUrl: '<%= image_path("leaflet/marker_hole.png") %>',
+    iconUrl: 'static/css/marker_icon.png',
     number: '',
     shadowUrl: null,
     iconSize: new L.Point(25, 41),
@@ -194,7 +209,8 @@
         var markers = [];
        mapMarkers1 = [];
         mapMarkers3 = [];
-        dots=[]
+        var circles=[];
+        var paths = [];
 
 
 
@@ -218,30 +234,103 @@
         .then(response => {
                 response.text().then(t => {
 
-                 data =  JSON.parse(t);
-                 final = data[0]
-                 cors=JSON.parse(final)
+                 var data=JSON.parse(t)[0]
+                 var type = data.type
 
 
+                 /* rysowanie kolejnych wspolrzednych tramwajow*/
+
+                 if ( type.localeCompare("tram") == 0 ){
 
 
-                  for (var i = 0; i < markers.length; i++) {
-                  mymap.removeLayer(markers[i]);
-                  }
+                          for (var i = 0; i < markers.length; i++) {
+                          mymap.removeLayer(markers[i]);
+                          }
 
-                  n = 0
-                  while (n < tram_lines.length){
+                          n = 0
+                          while (n < tram_lines.length){
 
-                  var b = 0;
-                  list = [];
-                  list = cors[tram_lines[n]];
+                          var b = 0;
+                          list = [];
+                          list = data[tram_lines[n]];
 
-                  marker1 = L.marker([list[1],list[0]]).addTo(mymap);
+                          var number =4 ;
+                          var numberIcon = L.divIcon({
+                                  className: "number-icon",
+                                  iconSize: [25, 41],
+                                  iconAnchor: [10, 44],
+                                  popupAnchor: [3, -40],
+                                  html: number
+                            });
 
-                  markers.push(marker1);
-                  n+=1;
+                           var marker1 = new L.marker(new L.LatLng(list[1],list[0]), {
+                                icon:	new L.NumberedDivIcon({number: '1'})
+                            }).addTo(mymap);
+
+                         /* marker1 = L.marker([list[1],list[0]]).addTo(mymap);*/
+
+                          markers.push(marker1);
+                          n+=1;
+
+                            }
+                 }
+                 else if ( type.localeCompare("path") == 0 ){
+
+                    coordinates_of_path = data.coordinates;
+
+                    for (var i = 0; i < paths.length; i++) {
+                          mymap.removeLayer(paths[i]);
+                          }
+
+                    path = L.polyline(coordinates_of_path,{
+                    color : 'red'
+                    }).addTo(mymap);
+
+                    paths.push(path);
+
 
                  }
+                 else if ( type.localeCompare("nodes_to_break") == 0 ){
+                  console.log("sent nodes to break");
+
+                   nodes = data.coordinates;
+
+                    for (var i = 0; i < circles.length; i++) {
+                          mymap.removeLayer(circles[i]);
+                          }
+
+
+                    for (var i = 0; i < nodes.length; i++) {
+
+                    var circleOptions = {
+                     color : 'red',
+                     fillColor : '#f03',
+                     fillOpacity : 0
+                    }
+
+                     circle = L.circle(nodes[i],15,circleOptions).addTo(mymap);
+                    circles.push(circle);
+
+                    }
+
+
+
+                 }
+                  else if ( type.localeCompare("loading") == 0 ){
+                  console.log("loading");
+
+
+                 }
+                  else if ( type.localeCompare("ready") == 0 ){
+                   console.log("ready")
+
+                 }
+
+
+
+
+
+
 
 
                 })

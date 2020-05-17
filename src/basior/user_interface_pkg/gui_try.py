@@ -29,6 +29,8 @@ def create():
 def time_feed():
     create()
 
+
+
     def generate(temp):
         yield str(temp)
 
@@ -39,6 +41,19 @@ def time_feed():
     if temp  is not None:
         if temp is not False:
             return Response(generate(temp), mimetype='text')
+
+
+    """
+    while True:
+
+
+        def generate():
+            yield str( json.dumps( [{"type" :"tram" , "33": [16.955245, 51.1336907], "11": [16.9788997, 51.0942625]}]    ) )
+
+        return Response(generate(), mimetype='text')
+    """
+
+
 
 
 
