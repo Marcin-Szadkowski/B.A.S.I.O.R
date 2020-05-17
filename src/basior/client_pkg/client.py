@@ -55,8 +55,11 @@ def run():  # Function used for testing
 
     while True:
         # TestClient.message_to_server(json.loads('{ "command": "removed", "x": "6", "y": "9"}'))
-        time.sleep(1)
-        print(TestClient.check_changes())
+        time.sleep(0.2)
+        temp = TestClient.check_changes()
+        
+        if temp is not False:
+            print(temp)
 
     TestClient.end_connection()
     TestClient.join()
