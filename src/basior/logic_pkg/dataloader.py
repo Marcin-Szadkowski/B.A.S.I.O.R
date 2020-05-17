@@ -1,15 +1,21 @@
 import geopandas as gpd
 from shapely.geometry import LineString
+from graphmodifier import GraphModifier
 import pandas as pd
 from pandas import Series
 import pkg_resources
 import os
+import osmnx as ox
 
 
 class DataLoader(object):
     """Class loads data from geojson files"""
-    all_lines_data = os.path.join(pkg_resources.resource_filename(__package__, "data"), "all_tram_lines.geojson")  # Path of .geojson file with tram related data from OSM
-    lines_to_load = os.path.join(pkg_resources.resource_filename(__package__, "data"), "lines_to_load.csv") # Path of .cvs file with trams to load
+    # Path of .geojson file with tram related data from OSM
+    all_lines_data = os.path.join(pkg_resources.resource_filename(__package__, "data"), "all_tram_lines.geojson")
+    # Path of .cvs file with trams to load
+    lines_to_load = os.path.join(pkg_resources.resource_filename(__package__, "data"), "lines_to_load.csv")
+    # Path of graph
+    folder_of_graph = pkg_resources.resource_filename(__package__, "data")
 
     def __init__(self):
         """
@@ -18,6 +24,7 @@ class DataLoader(object):
         """
         self.gdf = gpd.read_file(DataLoader.all_lines_data)
         self.gdf_stops = self.gdf[(self.gdf.public_transport == "stop_position")]
+        self.graph = G = ox.load_graphml('graph.graphml', folder=DataLoader.folder_of_graph)
 
     def load_single_line(self, line_number, direction_to, return_type="LINESTRING"):
         """
@@ -40,7 +47,6 @@ class DataLoader(object):
 
         return data_table
 
-
     def load_tram_stops(self, tram_line):
         """
         See https://shapely.readthedocs.io/en/latest/manual.html#binary-predicates -> Binary Predicates
@@ -56,19 +62,19 @@ class DataLoader(object):
             stops_points = [p for p in contained]
             return stops_points
 
-    def fix_edges_geometry(self, graph):
+    def update_graph(self):
         """
-        It unifies edges from graph - simplifies further analyze
-        Very short edges from osmnx graph has no 'geometry' property
-        This method adds 'geometry' to these edges - added 'geometry' is straight LINESTRING
-        :param graph:
-        :return:
+        Function downloads data from osm as osmnx graph
+        Then it fixes it's geomtry
+        Subseguently it removes redundant nodes
+        :return: DataLoader object graph is up to date and after all necessary fixes
         """
-        for edge1 in graph.edges(data=True):
-            try:
-                line = edge1[2]['geometry']
-            except KeyError:
-                point1 = graph.nodes[edge1[0]]
-                point2 = graph.nodes[edge1[1]]
-                new_linestring = LineString([(point1['x'], point1['y'],), (point2['x'], point2['y'])])
-                edge1[2]['geometry'] = new_linestring
+        G = ox.graph_from_place('Wroclaw, Poland', network_type='drive',
+                                infrastructure='way["railway"~"tram"]', simplify=True)
+        # Fix geometry
+        GraphModifier.fix_edges_geometry(G)
+        # Simplify for correct tram traffic
+        G = GraphModifier.simplify_for_tram_traffic(G)
+        # Finally save graph in specified location
+        ox.save_graphml(G, "graph.graphml", folder=DataLoader.folder_of_graph)
+        self.graph = G

@@ -1,0 +1,207 @@
+import networkx as nx
+import osmnx as ox
+import numpy as np
+from shapely.geometry import Point, LineString, Polygon, MultiLineString
+from shapely import ops
+
+
+class GraphModifier:
+    """
+    Class implements very important modifications that provide correct tram traffic
+    """
+    @staticmethod
+    def simplify_for_tram_traffic(G):
+        """
+        Nodes of degree of 4 are irrelevant in tram network
+        Without this reduction tram would make not possible(in real live) turns
+        :param G: MultiDiGraph
+        :return: MultiDiGraph after reduction
+        """
+        G = G.copy()
+        # Find all nodes of deg=4 that should be deleted
+        red_nodes = [node for node in G.nodes() if nx.degree(nx.to_undirected(G), node, weight=1) == 4]
+        red_nodes = [node for node in G.nodes(data=True) if node[0] in red_nodes]
+
+        for node in red_nodes:
+            # Of course we have to replace edges that contains specified node
+            paths = GraphModifier.get_correct_paths(node, G)
+            # paths is None if node has not exactly 4 undirected neighbors and 2 directed neighbors
+            if paths is None:
+                continue
+            for path in paths:
+                # Path states for new edge that we have to construct from two edges in path
+                # Dictionary of attributes of edges in path
+                edge_attributes = {}
+                # Note: new edge will be constructed out of exactly two edges
+                for u, v in zip(path[:-1], path[1:]):
+                    # (MultiGraphs use keys (the 0 here), indexed with ints from 0 and
+                    # up)
+                    edge = G.edges[u, v, 0]
+                    # Gather all properties of edges
+                    for key in edge:
+                        if key in edge_attributes:
+                            # if this key already exists in the dict, append it to the
+                            # value list
+                            edge_attributes[key].append(edge[key])
+                        else:
+                            # if this key doesn't already exist, set the value to a list
+                            # containing the one value
+                            edge_attributes[key] = [edge[key]]
+                # Reduce gathered attributes to only unique values (except Length and geometry)
+                for key in edge_attributes:
+                    # We have to flatten attributes because there are some situations where lists of attr includes lists
+                    edge_attributes[key] = list(flatten(edge_attributes[key]))
+                    # geometry and lengths are special treated
+                    if not key == 'geometry' and len(set(edge_attributes[key])) == 1 and not key == 'length':
+                        # if there's only 1 unique value in this attribute list,
+                        # consolidate it to the single value (the zero-th)
+                        edge_attributes[key] = edge_attributes[key][0]
+                    elif not key == 'length' and not key == 'geometry':
+                        # otherwise, if there are multiple values, keep one of each value
+                        edge_attributes[key] = list(set(edge_attributes[key]))
+                # We have to merge LineString geometries
+                if 'geometry' in edge_attributes:
+                    multi_line = []
+                    for line in edge_attributes['geometry']:
+                        multi_line.append(line)
+                    multi_line = list(flatten(multi_line))  # cos some of edges have list of LineStrings as geometry
+                    # Form MultiLineString of given LineString geometries
+                    multi_line = MultiLineString(multi_line)
+                    # Finally merge them
+                    merged_line = ops.linemerge(multi_line)
+                    # There is one (meybe more) edges that can't be merged because they are not contiguous
+                    if isinstance(merged_line, LineString):
+                        edge_attributes['geometry'] = merged_line
+                    # So if they are not contiguous ops.linemerge() returns MultiLineString
+                    elif isinstance(merged_line, MultiLineString):
+                        # Here we gonna fix this by connect_lines method
+                        edge_attributes['geometry'] = connect_lines(merged_line)
+                else:
+                    # If there is no geometry then simply add straight LineString between two nodes
+                    edge_attributes['geometry'] = LineString([Point((G.nodes[node]['x'], G.nodes[node]['y']))
+                                                              for node in path])
+                # Sum length of edges in path
+                try:
+                    edge_attributes['length'] = sum(edge_attributes['length'])
+                except KeyError:
+                    # Not sure how many edges are relate to this exception
+                    edge_attributes['length'] = 1
+                # Add new edge
+                G.add_edge(path[0], path[-1], **edge_attributes)
+            # Remove redundant node
+            G.remove_node(node[0])
+        return G
+
+    @staticmethod
+    def get_correct_paths(node, graph):
+        """
+        Functions returns correct paths of node: deg(node) = 4, based on smallest angle between vetors
+        Given node v of deg(v) = 4 (in undirected graph), it has 4 neighbors {w, u, k, m} and 2 neighbors {k, m} in
+        directed graph - we are exactly interested in that case.
+        To form sensible paths we have find paths (v1, v, v2), v1 in {w, u}, v2 in {k, m} that angle between
+        vectors (v1, v) & (v, v2) is the smallest, so tram would make only smooth turns
+        :param node:    node to delete - node of deg(node) = 4
+        :param graph: directed MultiDiGraph
+        :return: list of correct paths to add, single path represents correct edge that will be added to graph,
+        """
+        # We need undirected graph to define undirected neighbors
+        un_graph = nx.Graph(graph)
+        un_graph = nx.to_undirected(un_graph)
+        # Define undirected neighbors
+        un_neighbors = set(un_graph.neighbors(node[0]))
+        # There is an exception - some nodes are of deg()=4, but have less than 4 neighbors
+        if len(un_neighbors) < 4:
+            return None
+        # Define directed neighbors
+        di_neighbors = set(graph.neighbors(node[0]))
+        un_neighbors = un_neighbors.difference(di_neighbors)
+        di_neighbors = list(di_neighbors)
+        un_neighbors = list(un_neighbors)
+        # Here we check for condition described in above function description
+        if len(un_neighbors) != 2 or len(di_neighbors) != 2:
+            return None
+        # First vector from 1 to given node
+        vect_1 = tuple((graph.nodes[un_neighbors[0]]['y'] - node[1]['y'],
+                        graph.nodes[un_neighbors[0]]['x'] - node[1]['x']))
+        # Second vector from 2 to given node
+        vect_2 = tuple((graph.nodes[un_neighbors[1]]['y'] - node[1]['y'],
+                        graph.nodes[un_neighbors[1]]['x'] - node[1]['x']))
+        # Third vector from given node to 3
+        vect_3 = tuple((node[1]['y'] - graph.nodes[di_neighbors[0]]['y'],
+                        node[1]['x'] - graph.nodes[di_neighbors[0]]['x']))
+
+        # Fourth vector from given node to 4
+        vect_4 = tuple((node[1]['y'] - graph.nodes[di_neighbors[1]]['y'],
+                        node[1]['x'] - graph.nodes[di_neighbors[1]]['x']))
+        # Calculate angles between vectors
+        angle_13 = angle_between(vect_1, vect_3)
+        angle_14 = angle_between(vect_1, vect_4)
+        angle_23 = angle_between(vect_2, vect_3)
+        angle_24 = angle_between(vect_2, vect_4)
+        # The set of two correct paths will be chosen based on the smallest angle
+        paths = {angle_13: [[un_neighbors[0], node[0], di_neighbors[0]], [un_neighbors[1], node[0], di_neighbors[1]]],
+                 angle_14: [[un_neighbors[0], node[0], di_neighbors[1]], [un_neighbors[1], node[0], di_neighbors[0]]],
+                 angle_23: [[un_neighbors[1], node[0], di_neighbors[0]], [un_neighbors[0], node[0], di_neighbors[1]]],
+                 angle_24: [[un_neighbors[1], node[0], di_neighbors[1]], [un_neighbors[0], node[0], di_neighbors[0]]]}
+        best_angle = sorted([angle_13, angle_14, angle_24, angle_23])[0]
+        return paths[best_angle]
+
+    @staticmethod
+    def fix_edges_geometry(graph):
+        """
+        It unifies edges from graph - simplifies further analyze
+        Very short edges from osmnx graph has no 'geometry' property
+        This method adds 'geometry' to these edges - added 'geometry' is straight LINESTRING
+        :param graph:
+        :return:
+        """
+        for edge1 in graph.edges(data=True):
+            try:
+                line = edge1[2]['geometry']
+            except KeyError:
+                point1 = graph.nodes[edge1[0]]
+                point2 = graph.nodes[edge1[1]]
+                new_linestring = LineString([(point1['x'], point1['y'],), (point2['x'], point2['y'])])
+                edge1[2]['geometry'] = new_linestring
+
+
+def unit_vector(vector):
+    return vector / np.linalg.norm(vector)
+
+
+def angle_between(v1, v2):
+    """
+    Function calculates angle between two vectors
+    :param v1: vector
+    :param v2:  vector
+    :return: angle in radians
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+
+def flatten(o, tree_types=(list, tuple)):
+    """Funkcja przechodzaca po liscie"""
+    if isinstance(o, tree_types):
+        for value in o:
+            for sub_value in flatten(value, tree_types):
+                yield sub_value
+    else:
+        yield o
+
+
+def connect_lines(multi_line):
+    """
+    Function connects not contiguous LineStrings (by simply adding straight line between them)
+    :param multi_line:  MultiLineString - so list of LineStrings
+    :return: contiguous LineString
+    """
+    new_lines = []
+    for line1, line2 in zip(multi_line[:-1], multi_line[1:]):
+        new = LineString([line1.coords[-1], line2.coords[0]])
+        new_lines.append(new)
+    for line in multi_line:
+        new_lines.append(line)
+    multi_line = MultiLineString(new_lines)
+    return ops.linemerge(multi_line)
