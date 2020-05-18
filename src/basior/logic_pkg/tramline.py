@@ -1,4 +1,4 @@
-from dataloader import DataLoader
+from .dataloader import DataLoader
 import matplotlib.pyplot as plt
 
 
@@ -12,13 +12,12 @@ class TramLine(object):
         :param direction_to:
         :param dl: DataLoader object
         """
-        self.number = number    # Stored as str
+        self.number = number  # Stored as str
         self.direction_to = direction_to
         self.defult_route = dl.load_single_line(number, direction_to)  # As you can default_route is type LineString
         self.current_route = self.defult_route
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.deleted_edges = []  # List of deleted edges from defult route
-
 
     def show(self, with_stops=True):
         """Development tool. Plot line"""
