@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 from dataloader import DataLoader
->>>>>>> 9e081d07a5be7b0afe82a4261c57622a3587fb25
 import matplotlib.pyplot as plt
 
 
