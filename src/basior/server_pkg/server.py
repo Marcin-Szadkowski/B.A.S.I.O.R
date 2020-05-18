@@ -4,7 +4,6 @@ from threading import Thread
 from basior.logic_pkg.logic_connector import LogicConnector
 from .client_handler import ClientHandler
 
-
 class Server(Thread):
     def __init__(self, port):  # Initiate server
         super(Server, self).__init__()

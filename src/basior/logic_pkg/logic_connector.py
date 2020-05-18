@@ -3,6 +3,7 @@ import time
 import json
 from .dataloader import DataLoader
 from .tramline import TramLine
+from itertools import cycle
 
 
 class LogicConnector(Thread):
@@ -10,15 +11,20 @@ class LogicConnector(Thread):
         super(LogicConnector, self).__init__()
         self.State = False
         self.trams = []
+        self.route_iterator = []
         self.next_move = None
 
         self.load_data()
 
     def load_data(self):
         Loader = DataLoader()
+        all_trams_data = Loader.load_all_lines()
 
-        self.trams.append(TramLine("33", "Sępolno", Loader))
-        self.trams.append(TramLine("11", "Kromera", Loader))
+        for elem in all_trams_data:
+            self.trams.append(TramLine(str(elem[0]), str(elem[1]), Loader))
+
+        for tram in self.trams:
+            self.route_iterator.append((cycle(tram.current_route.xy[0]), cycle(tram.current_route.xy[1])))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
         print('Logic got: ', message)
@@ -36,20 +42,15 @@ class LogicConnector(Thread):
         return json.dumps(temp)
 
     def run(self):
-        counter = 0  # Temporary solution
 
         while True:
 
             if self.next_move is None:
                 info = {}
-                for tram in self.trams:
-                    info[tram.number] = (tram.current_route.xy[0][counter], tram.current_route.xy[1][counter])
-
-                    if counter + 3 >= len(tram.current_route.xy[0]):    # Temporary solution
-                        counter = 0
+                for i in range(len(self.trams)):
+                    info[self.trams[i].number] = (next(self.route_iterator[i][0]), next(self.route_iterator[i][1]))
 
                 self.next_move = info
                 self.State = not self.State
-                counter += 3
 
             time.sleep(1)
