@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+from dataloader import DataLoader
+>>>>>>> 9e081d07a5be7b0afe82a4261c57622a3587fb25
 import matplotlib.pyplot as plt
 
 
@@ -18,9 +22,11 @@ class TramLine(object):
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.deleted_edges = []  # List of deleted edges from defult route
 
+
     def show(self, with_stops=True):
         """Development tool. Plot line"""
         plt.plot(self.current_route.xy[0], self.current_route.xy[1])
         if with_stops:
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
+
         plt.show()
