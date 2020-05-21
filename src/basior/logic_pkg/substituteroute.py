@@ -41,8 +41,33 @@ class SubstituteRoute:
             new_route = new_route.union(set(path))
             new_route = new_route.union(set(k1))
             new_route = new_route.union(set(k2))
+        # Po wykonanej wyzej operacji mozemy miec niepolaczone skladowe
+        # Teraz sprawdzmy, ktore skladowe zostaly niepodlaczone
+        for k in ordered_components:
+            # Jesli spojna skladowa i nowa trasa sa rozlaczne, to znaczy, ze nie udalo sie jej polaczyc
+            if not bool(new_route & set(k)):
+                #  Sprobujmy ja dolaczyc do nowej trasy
+                # Wezmy jakikolwiek wierzcholek z nowej trasy
+                node = next(iter(new_route))    # obsluzyc wyjatek gdy trasa jest pusta! ! !
+                # Moze sie tak zdazyc, ze ten wierzcholek nie jest w trasie
+                while node not in route:
+                    node = next(iter(new_route))    # Szukamy takiego, ktory jest w oryginalnej trasie
+                path = None
+                if route.index(k[0]) < route.index(node):
+                    # To znaczy, ze skladowa jest przed polaczona nowa trasa
+                    # Musimy to rozrozniac ze wzgledu na wyznaczanie drogi w grafie skierowanym
+                    path = SubstituteRoute.connect_components(graph, k, new_route)
+                else:
+                    # Skladowa jest za polaczona trasa, laczymy nowa_trasa -> skladowa
+                    path = SubstituteRoute.connect_components(graph, new_route, k)
+                if path is None:
+                    continue
+                # Dolacz droge i skladowa
+                new_route = new_route.union(set(path))
+                new_route = new_route.union(set(k))
 
         sub_graph = graph.subgraph(new_route)
+        # Szukamy najdluzszej sciezki, wynikiem bedzie graf liniowy (redukujemy rozne odnogi trasy)
         new_route = nx.dag_longest_path(sub_graph)
         sub_graph = graph.subgraph(new_route)
         print(new_route)
@@ -111,7 +136,7 @@ class SubstituteRoute:
         """
     @staticmethod
     def connect_components(graph, k1, k2):
-        min_length = 3000
+        min_length = 3000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
         path = None
         for v in k1:
             for w in k2:
