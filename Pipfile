@@ -14,6 +14,7 @@ fiona = "*"
 pyscaffold = "*"
 matplotlib = "*"
 geojson = "*"
+flask = "*"
 
 [requires]
 python_version = "3.8"

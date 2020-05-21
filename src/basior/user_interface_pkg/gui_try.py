@@ -1,23 +1,32 @@
 from basior.client_pkg.client import Client
 import random
+import ast
 import json
-from flask import Flask, Response, render_template, url_for
+from flask import Flask, Response, render_template, url_for, request, flash
 from datetime import datetime
 import time
 
 app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
 
+tramList = []
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if request.method == 'POST':
+        manufacturer = request.form['manu']
+        flash(str(manufacturer))
+    return render_template("index.html")
 
-@app.route('/')
-def animation():
+
+#@app.route("/", methods=['POST'])
+@app.route("/animation")
+def load():
     return render_template('load_animation.html')
 
-def create():
 
+def create():
     if not TestClient.is_alive():
         TestClient.start()
         time.sleep(2)
@@ -29,34 +38,43 @@ def create():
 def time_feed():
     create()
 
-
-
     def generate(temp):
-        yield str(temp)
+        yield json.dumps(temp)
 
     time.sleep(2)
-    temp = json.dumps(TestClient.check_changes())
+    temp = TestClient.check_changes()
+    print(temp)
 
+    if temp is not False:
+        print(json.loads(temp[0])["type"])
 
-    if temp  is not None:
-        if temp is not False:
-            return Response(generate(temp), mimetype='text')
-
-
-    """
-    while True:
-
-
-        def generate():
-            yield str( json.dumps( [{"type" :"tram" , "33": [16.955245, 51.1336907], "11": [16.9788997, 51.0942625]}]    ) )
-
-        return Response(generate(), mimetype='text')
-    """
+        if json.loads(temp[0])["type"] == "ready":
+            index()
+        elif json.loads(temp[0])["type"] == "bus_lines":
+            for tram in json.loads(temp[0])["lines"]:
+                if tram not in tramList:
+                    tramList.append(tram)
 
 
 
 
+    return Response(generate(temp), mimetype='text')
 
+
+
+@app.route('/', methods=["POST"])
+def some_function():
+    text = request.form.get('text')
+    text = text.split(',')
+    cors = []
+    cors.append(float(text[0]))
+    cors.append(float(text[1]))
+
+    dict = {}
+    dict["destroy"] = cors
+    TestClient.message_to_server(dict)
+
+    return render_template('load_animation.html')
 
 
 
@@ -67,3 +85,12 @@ def run():
 
 if __name__ == '__main__':
     run()
+""" info["type"] = "tram"
+                temp = random.choice(self.trams).current_route
+               # info["lines"] = ["1","2","3","11","33","70"]
+                #info["coordinates"] = [[random.uniform(51.100,51.113), 17.03408718109131], [51.11633355911742, 17.03333616256714],
+                 #                [51.11827317886492, 17.03850746154785], [random.uniform(51.100,51.113), random.uniform(17,17.1)]]
+
+
+                #{"type": "ready"}
+                #info['type'] = 'update'"""
