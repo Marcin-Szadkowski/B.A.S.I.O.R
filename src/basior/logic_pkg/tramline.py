@@ -1,3 +1,4 @@
+from .dataloader import DataLoader
 import matplotlib.pyplot as plt
 
 
@@ -11,7 +12,7 @@ class TramLine(object):
         :param direction_to:
         :param dl: DataLoader object
         """
-        self.number = number    # Stored as str
+        self.number = number  # Stored as str
         self.direction_to = direction_to
         self.defult_route = dl.load_single_line(number, direction_to)  # As you can default_route is type LineString
         self.current_route = self.defult_route
@@ -23,4 +24,5 @@ class TramLine(object):
         plt.plot(self.current_route.xy[0], self.current_route.xy[1])
         if with_stops:
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
+
         plt.show()
