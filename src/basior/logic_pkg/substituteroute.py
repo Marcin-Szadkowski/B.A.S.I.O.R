@@ -6,14 +6,18 @@ import osmnx as ox
 class SubstituteRoute:
 
     @staticmethod
-    def calculate_bypass(graph, edge, tram_line):
+    def calculate_bypass(graph, tram_line):
         omitted = []
-        route = tram_line.route_in_order
+
         line = tram_line.default_route
         nodes = GraphConverter.line_to_nodes(graph, line)
         # w ten sposob mamy subgraph, ktory dzieli informacje z orginalnym grafem
         sub_graph = graph.subgraph(nodes)
+        # Powinno nie byc None ale nigdy nie wiadomo
+        if tram_line.route_in_order is None:
+            return
 
+        route = tram_line.route_in_order
         # A tak powstaje nowy niezalezny graf
         sub_graph = nx.Graph(sub_graph)
 
@@ -26,7 +30,8 @@ class SubstituteRoute:
 
         place_dict = dict()
         for k in components:
-            place_dict[route.index(k[0])] = k
+            if k[0] in route:
+                place_dict[route.index(k[0])] = k
         ordered_components = []
         # Uporzadkowywanie spojnych skladowych w kolejnosci jak na trasie
         for key in sorted(place_dict.keys()):
@@ -41,6 +46,7 @@ class SubstituteRoute:
             new_route = new_route.union(set(path))
             new_route = new_route.union(set(k1))
             new_route = new_route.union(set(k2))
+        print(new_route)
         # Po wykonanej wyzej operacji mozemy miec niepolaczone skladowe
         # Teraz sprawdzmy, ktore skladowe zostaly niepodlaczone
         for k in ordered_components:
@@ -48,10 +54,17 @@ class SubstituteRoute:
             if not bool(new_route & set(k)):
                 #  Sprobujmy ja dolaczyc do nowej trasy
                 # Wezmy jakikolwiek wierzcholek z nowej trasy
-                node = next(iter(new_route))    # obsluzyc wyjatek gdy trasa jest pusta! ! !
+                try:
+                    node = next(iter(new_route))    # obsluzyc wyjatek gdy trasa jest pusta! ! !
+                except StopIteration:
+                    continue
                 # Moze sie tak zdazyc, ze ten wierzcholek nie jest w trasie
+                node_iter = iter(new_route)
                 while node not in route:
-                    node = next(iter(new_route))    # Szukamy takiego, ktory jest w oryginalnej trasie
+                    try:
+                        node = next(node_iter)    # Szukamy takiego, ktory jest w oryginalnej trasie
+                    except StopIteration:
+                        continue  # W takim razie nie podlaczymy skladowej
                 path = None
                 if route.index(k[0]) < route.index(node):
                     # To znaczy, ze skladowa jest przed polaczona nowa trasa
@@ -68,75 +81,27 @@ class SubstituteRoute:
 
         sub_graph = graph.subgraph(new_route)
         # Szukamy najdluzszej sciezki, wynikiem bedzie graf liniowy (redukujemy rozne odnogi trasy)
-        new_route = nx.dag_longest_path(sub_graph)
+        # new_route = nx.dag_longest_path(sub_graph)
         sub_graph = graph.subgraph(new_route)
         print(new_route)
-        ox.plot_graph(sub_graph)
-        """
-        node_left = edge[1]
-        node_right = edge[2]
-        switch = True  # przelacznik zeby iterowac na zmiane
-        iter_left = sub_graph.neighbors(node_left)
-        iter_right = sub_graph.neighbors(node_right)
+        # Jezeli udalo sie znalezc jakas droge zastepcza
+        if new_route:
+            #  Musimy zredukowac slepe polaczenia zeby trasa jakos wygladala
+            if nx.is_directed_acyclic_graph(sub_graph):
+                # Then we can find the longest path
+                new_route = nx.dag_longest_path(sub_graph)
+                sub_graph = graph.subgraph(new_route)
+            else:
+                # We have to convert graph to DAG - Directed Acyclic Graph
+                sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
+                new_route = nx.dag_longest_path(sub_graph)
+                sub_graph = graph.subgraph(new_route)
+            # Finally make new LineString
+            tram_line.current_route = GraphConverter.route_to_line_string(sub_graph)
 
-        while not nx.has_path(graph, node_left, node_right):
-            # to ma luki - gdy dochodzimy do konca trasy to sytuacja sie sypie
-            # pewnie inne luki tez sa
-            if switch:
-                omitted.append(node_left)
-                try:
-                    node_left = next(iter_left)
-                    iter_left = sub_graph.neighbors(node_left)
-                except StopIteration:
-                    omitted.pop()
-                    break
-                switch = False
-            elif not switch:
-                omitted.append(node_right)
-                try:
-                    node_right = next(iter_right)
-                    iter_right = sub_graph.neighbors(node_right)
-                except StopIteration:
-                    omitted.pop()
-                    break
-                switch = True
-        path = nx.shortest_path(graph, node_left, node_right, weight='length')
-        min_length = nx.shortest_path_length(graph, node_left, node_right, weight='length')
-        print(min_length)
-        print("Dlugosc sciezki: ", len(path))
-        new_nodes = set(nodes).difference(set(omitted))
-        new_nodes = list(new_nodes.union(set(path)))
-        new_graph = graph.subgraph(new_nodes)
-        # Mamy juz poczatkowe rozwiazanie
-        iter_left = sub_graph.neighbors(node_left)
-        iter_right = sub_graph.neighbors(node_right)
-
-        k1 = components[0]
-        k2 = components[1]
-
-        for v in k1:
-            for w in k2:
-                try:
-                    length = nx.shortest_path_length(graph, v, w, weight='length')
-                except nx.exception.NetworkXNoPath:
-                    continue
-                if length < min_length:
-                    path = nx.shortest_path(graph, v, w, weight='length')
-                    min_length = length
-        print(min_length)
-        new_route = set(nodes).difference(set(omitted))
-        new_route = list(new_route.union(set(path)))
-        # ox.plot_graph(nx.subgraph(graph, new_route))
-        # cycles = nx.find_cycle(sub_graph, orientation='ignore')
-
-        # ox.plot_graph(new_graph)
-        # simple_path = list(nx.simple_cycles(sub_graph))
-
-        # show_edges(sub_graph, cycles)
-        """
     @staticmethod
     def connect_components(graph, k1, k2):
-        min_length = 3000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
+        min_length = 5000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
         path = None
         for v in k1:
             for w in k2:
@@ -148,3 +113,25 @@ class SubstituteRoute:
                     path = nx.shortest_path(graph, v, w, weight='length')
                     min_length = length
         return path
+
+    @staticmethod
+    def convert_to_dag(graph):
+        """
+        Method tries to convert graph to Directed Acyclic Graph
+        Algorithm:
+            - find minimum spanning tree
+            - get attributes of all edges in tree
+            - build DiGraph from those edges
+        :param graph: MultiDiGraph, DiGraph
+        :return: Directed Acyclic Graph
+        """
+        sub_graph = nx.MultiDiGraph(graph)
+        # Find spanning tree on undirected sub_graph (method works only for undirected graphs)
+        tree = nx.minimum_spanning_tree(sub_graph.to_undirected())
+        # To unambiguously identify edge in MultiDiGraph we have to use it`s dictionary
+        edges_dict = list(e[2] for e in tree.edges(data=True))
+        edges_from_graph = [e for e in graph.edges(data=True) if e[2] in edges_dict]
+        sub_graph = nx.DiGraph()
+        for e in edges_from_graph:
+            sub_graph.add_edge(e[0], e[1], **e[2])
+        return sub_graph
