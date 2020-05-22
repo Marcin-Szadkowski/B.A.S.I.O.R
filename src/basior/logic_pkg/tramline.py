@@ -19,7 +19,7 @@ class TramLine(object):
         self.current_route = self.defult_route
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.deleted_edges = []  # List of deleted edges from defult route
-        self.route_iterator = [cycle(self.current_route.xy[0]), cycle(self.current_route.xy[1])]
+        self.route_iterator = [[cycle(self.current_route.xy[0]), cycle(self.current_route.xy[1])], 0]  # [0] is route iterator, [1] is index of iterated list
 
     def show(self, with_stops=True):
         """Development tool. Plot line"""
