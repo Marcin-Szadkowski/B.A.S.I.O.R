@@ -1,6 +1,9 @@
 import random
 class ComuinicateManager:
 
+
+    """comunicates given to client"""
+
     @staticmethod
     def send_trams_coords(trams):
         info = {}
@@ -18,25 +21,65 @@ class ComuinicateManager:
         return info
 
     @staticmethod
-    def send_tram_lines(lines):
+    def send_tram_lines(trams):
         info = {}
-        info["type"] = "bus_line"
-        info["lines"] = ["1", "2", "3", "11", "33", "70"]
+        info["type"] = "bus_lines"
+        lines = []
+        for i in range(len(trams)):
+            lines.append(trams[i].number)
 
+        info["lines"] = lines
         return info
 
     @staticmethod
-    def send_path(path_coordinates):
+    def send_path(trams,number):
         info = {}
         info["type"] = "path"
-        info["coordinates"] = [[random.uniform(51.100,51.113), 17.03408718109131], [51.11633355911742, 17.03333616256714],
-                                [51.11827317886492, 17.03850746154785], [random.uniform(51.100,51.113), random.uniform(17,17.1)]]
-        #do sth
+
+        x = trams[int(number)].current_route.xy[0]
+        y = trams[int(number)].current_route.xy[1]
+
+        cors = []
+
+        for i in range(0,len(x)):
+            touple = []
+            touple.append(float(y[i]))
+            touple.append(float(x[i]))
+            cors.append(touple)
+
+        info["coordinates"] = cors
+
         return info
 
+
+
     @staticmethod
-    def nodes_to_break(trams):
+    def nodes_to_break(list_of_nodes_coordinates):
         info = {}
         info["type"] = "nodes_to_break"
-        #do sth
+        info["coordinates"] = list_of_nodes_coordinates
+        return info
+
+
+    """comunicates given to server  """
+
+
+    @staticmethod
+    def send_destroy(text):
+        text = text.split(',')
+        cors = []
+        cors.append(float(text[0]))
+        cors.append(float(text[1]))
+
+        dict = {}
+        dict["type"] = "destroy"
+        dict["coordinates"] = cors
+        return dict
+
+    @staticmethod
+    def get_path_of_tram(line):
+        info = {}
+        info["type"] = "get_tram_path"
+        info["line"] = line
+
         return info

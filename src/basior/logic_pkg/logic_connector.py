@@ -25,7 +25,19 @@ class LogicConnector(Thread):
             self.trams.append(TramLine(str(elem[0]), str(elem[1]), Loader))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
-        print('Logic got: ', message)
+
+        type = json.loads(json.dumps(message))["type"]
+        if type == 'destroy':
+            if self.next_move is None:
+                self.next_move = self.Comunicates.send_path(self.trams,"2")
+                self.State = not self.State
+
+
+
+
+
+
+
 
     def get_state(self):  # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
         return self.State
@@ -46,8 +58,8 @@ class LogicConnector(Thread):
                 self.next_move = self.Comunicates.send_trams_coords(self.trams)
                 self.State = not self.State
 
-            elif self.next_move is None:
-                self.next_move = self.Comunicates.send_trams_coords(self.trams)
-                self.State = not self.State
+
+
+
 
             time.sleep(1)

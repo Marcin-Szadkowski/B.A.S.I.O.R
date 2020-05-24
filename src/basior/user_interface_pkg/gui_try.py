@@ -6,6 +6,8 @@ from flask import Flask, Response, render_template, url_for, request, flash
 from datetime import datetime
 import time
 
+
+
 app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
 
@@ -14,10 +16,11 @@ tramList = []
 
 @app.route('/')
 def index():
+
     if request.method == 'POST':
         manufacturer = request.form['manu']
         flash(str(manufacturer))
-    return render_template("index.html")
+    return render_template("index.html",tramList = tramList)
 
 
 #@app.route("/", methods=['POST'])
@@ -65,16 +68,13 @@ def time_feed():
 @app.route('/', methods=["POST"])
 def some_function():
     text = request.form.get('text')
-    text = text.split(',')
-    cors = []
-    cors.append(float(text[0]))
-    cors.append(float(text[1]))
 
-    dict = {}
-    dict["destroy"] = cors
-    TestClient.message_to_server(dict)
 
-    return render_template('load_animation.html')
+
+
+    TestClient.message_to_server(ComuinicateManager.send_destroy(text))
+
+    return render_template('index.html',tramList = tramList)
 
 
 

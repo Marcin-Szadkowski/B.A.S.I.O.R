@@ -35,7 +35,7 @@ class Client(Thread):
 
         while True:
             try:
-                server_mess = pickle.loads(self.Socket.recv(2048))
+                server_mess = pickle.loads(self.Socket.recv(40000))
                 is_received = True
             except socket.error:
                 is_received = False
