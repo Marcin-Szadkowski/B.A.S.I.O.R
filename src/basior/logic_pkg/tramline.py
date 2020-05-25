@@ -21,7 +21,6 @@ class TramLine(object):
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.route_iterator = [[cycle(self.current_route.xy[0]), cycle(self.current_route.xy[1])], 0]
 
-
     def show(self, with_stops=True):
         """Development tool. Plot line"""
         if isinstance(self.current_route, MultiLineString):
