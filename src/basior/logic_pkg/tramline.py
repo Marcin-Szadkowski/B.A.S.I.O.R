@@ -28,3 +28,4 @@ class TramLine(object):
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
 
         plt.show()
+

@@ -22,7 +22,7 @@ class DataLoader(object):
         Initializes GeoDataFrame that reads all data from specified file
         + makes new GeoDataFrame with stop_positions only
         """
-        self.gdf = gpd.read_file(DataLoader.all_lines_data)
+        self.gdf = gpd.read_file(self.all_lines_data)
         self.gdf_stops = self.gdf[(self.gdf.public_transport == "stop_position")]
         self.graph = G = ox.load_graphml(self.folder_of_graph)
 
