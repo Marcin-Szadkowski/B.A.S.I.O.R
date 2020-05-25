@@ -1,9 +1,9 @@
 from shapely import ops
 from shapely.geometry import LineString, Point, MultiLineString
 from pandas import Series
-from graphmodifier import connect_lines
+from .graphmodifier import connect_lines
 import sys
-from graphmodifier import flatten
+from .graphmodifier import flatten
 import networkx as nx
 import osmnx as ox
 
