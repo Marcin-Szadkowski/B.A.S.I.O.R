@@ -1,10 +1,7 @@
 from .dataloader import DataLoader
 import matplotlib.pyplot as plt
 from itertools import cycle
-<<<<<<< HEAD
 from Shapely import MultiLineString
-=======
->>>>>>> client_gui
 
 
 class TramLine(object):
