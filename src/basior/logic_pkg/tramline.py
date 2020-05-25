@@ -1,6 +1,6 @@
+from .dataloader import DataLoader
 import matplotlib.pyplot as plt
-from shapely.geometry import MultiLineString
-from graphconverter import GraphConverter
+from itertools import cycle
 
 
 class TramLine(object):
@@ -13,13 +13,13 @@ class TramLine(object):
         :param direction_to:
         :param dl: DataLoader object
         """
-        self.number = number    # Stored as str
+        self.number = number  # Stored as str
         self.direction_to = direction_to
-        self.default_route = dl.load_single_line(number, direction_to)  # As you can see default_route is type LineString
-        self.current_route = self.default_route
-        self.stops = dl.load_tram_stops(self.default_route)  # List of shapely.Point objects
+        self.defult_route = dl.load_single_line(number, direction_to)  # As you can default_route is type LineString
+        self.current_route = self.defult_route
+        self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.deleted_edges = []  # List of deleted edges from defult route
-        self.route_in_order = GraphConverter.find_route_in_order(dl, self.default_route)
+        self.route_iterator = [[cycle(self.current_route.xy[0]), cycle(self.current_route.xy[1])], 0]  # [0] is route iterator, [1] is index of iterated list
 
     def show(self, with_stops=True):
         """Development tool. Plot line"""
@@ -30,4 +30,5 @@ class TramLine(object):
             plt.plot(self.current_route.xy[0], self.current_route.xy[1])
         if with_stops:
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
+
         plt.show()

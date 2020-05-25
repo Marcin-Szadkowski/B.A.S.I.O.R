@@ -3,7 +3,8 @@ import time
 import json
 from .dataloader import DataLoader
 from .tramline import TramLine
-from itertools import cycle
+from .comunicate_manager import ComuinicateManager
+from .substituteroute import SubstituteRoute
 
 
 class LogicConnector(Thread):
@@ -13,18 +14,15 @@ class LogicConnector(Thread):
         self.trams = []
         self.route_iterator = []
         self.next_move = None
+        self.Loader = DataLoader()
 
         self.load_data()
 
     def load_data(self):
-        Loader = DataLoader()
-        all_trams_data = Loader.load_all_lines()
+        all_trams_data = self.Loader.load_all_lines()
 
         for elem in all_trams_data:
-            self.trams.append(TramLine(str(elem[0]), str(elem[1]), Loader))
-
-        for tram in self.trams:
-            self.route_iterator.append((cycle(tram.current_route.xy[0]), cycle(tram.current_route.xy[1])))
+            self.trams.append(TramLine(str(elem[0]), str(elem[1]), self.Loader))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
         print('Logic got: ', message)
@@ -42,15 +40,21 @@ class LogicConnector(Thread):
         return json.dumps(temp)
 
     def run(self):
-
         while True:
 
             if self.next_move is None:
-                info = {}
-                for i in range(len(self.trams)):
-                    info[self.trams[i].number] = (next(self.route_iterator[i][0]), next(self.route_iterator[i][1]))
-
-                self.next_move = info
+                self.next_move = ComuinicateManager.send_trams_coords(self.trams)
                 self.State = not self.State
 
             time.sleep(1)
+
+    def check_routes(self, coords):  # Method to check how deleting edges influences tram routes and takes care of it
+
+        for tram in self.trams:
+            temp_route = SubstituteRoute.calculate_bypass(tram, coords, self.Loader.graph)
+
+            if temp_route is not tram.current_route:
+                tram.current_route = temp_route
+                # TODO: Must add iterator modification !!!
+            elif temp_route is tram.default_route:
+                tram.current_route = tram.default_route
