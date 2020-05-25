@@ -1,6 +1,7 @@
 from .dataloader import DataLoader
 import matplotlib.pyplot as plt
 from itertools import cycle
+from Shapely import MultiLineString
 
 
 class TramLine(object):
