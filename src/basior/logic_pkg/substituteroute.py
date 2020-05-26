@@ -7,27 +7,21 @@ class SubstituteRoute:
 
     @staticmethod
     def calculate_bypass(graph, tram_line):
-        omitted = []
-
-        line = tram_line.default_route
-        nodes = GraphConverter.line_to_nodes(graph, line)
+        # nodes = GraphConverter.line_to_nodes(graph, line)
+        nodes = GraphConverter.line_to_nodes_precise(graph, tram_line)
         # w ten sposob mamy subgraph, ktory dzieli informacje z orginalnym grafem
         sub_graph = graph.subgraph(nodes)
         # Powinno nie byc None ale nigdy nie wiadomo
         if tram_line.route_in_order is None:
             return
-
         route = tram_line.route_in_order
         # A tak powstaje nowy niezalezny graf
         sub_graph = nx.Graph(sub_graph)
-
         sub_graph = nx.to_undirected(sub_graph)
         # Komponenty skladowe mozna liczyc tylko dla grafow nieskierowanych
         # Te komponenty uporzadkujemy na podstawie route
-
         components = list(nx.connected_components(sub_graph))  # list of sets
         components = [list(component) for component in components]
-
         place_dict = dict()
         for k in components:
             if k[0] in route:
@@ -46,7 +40,6 @@ class SubstituteRoute:
             new_route = new_route.union(set(path))
             new_route = new_route.union(set(k1))
             new_route = new_route.union(set(k2))
-        print(new_route)
         # Po wykonanej wyzej operacji mozemy miec niepolaczone skladowe
         # Teraz sprawdzmy, ktore skladowe zostaly niepodlaczone
         for k in ordered_components:
@@ -55,14 +48,14 @@ class SubstituteRoute:
                 #  Sprobujmy ja dolaczyc do nowej trasy
                 # Wezmy jakikolwiek wierzcholek z nowej trasy
                 try:
-                    node = next(iter(new_route))    # obsluzyc wyjatek gdy trasa jest pusta! ! !
+                    node = next(iter(new_route))  # obsluzyc wyjatek gdy trasa jest pusta! ! !
                 except StopIteration:
                     continue
                 # Moze sie tak zdazyc, ze ten wierzcholek nie jest w trasie
                 node_iter = iter(new_route)
                 while node not in route:
                     try:
-                        node = next(node_iter)    # Szukamy takiego, ktory jest w oryginalnej trasie
+                        node = next(node_iter)  # Szukamy takiego, ktory jest w oryginalnej trasie
                     except StopIteration:
                         continue  # W takim razie nie podlaczymy skladowej
                 path = None
@@ -73,17 +66,13 @@ class SubstituteRoute:
                 else:
                     # Skladowa jest za polaczona trasa, laczymy nowa_trasa -> skladowa
                     path = SubstituteRoute.connect_components(graph, new_route, k)
-                if path is None:
-                    continue
-                # Dolacz droge i skladowa
-                new_route = new_route.union(set(path))
-                new_route = new_route.union(set(k))
-
-        sub_graph = graph.subgraph(new_route)
+                if path is not None:
+                    # Dolacz droge i skladowa
+                    new_route = new_route.union(set(k))
+                    new_route = new_route.union(set(path))
         # Szukamy najdluzszej sciezki, wynikiem bedzie graf liniowy (redukujemy rozne odnogi trasy)
         # new_route = nx.dag_longest_path(sub_graph)
         sub_graph = graph.subgraph(new_route)
-        print(new_route)
         # Jezeli udalo sie znalezc jakas droge zastepcza
         if new_route:
             #  Musimy zredukowac slepe polaczenia zeby trasa jakos wygladala
@@ -101,7 +90,7 @@ class SubstituteRoute:
 
     @staticmethod
     def connect_components(graph, k1, k2):
-        min_length = 5000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
+        min_length = 5000  # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
         path = None
         for v in k1:
             for w in k2:

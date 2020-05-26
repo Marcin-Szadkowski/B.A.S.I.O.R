@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiLineString
 from .route_iterator import RouteIterator
+from .graphconverter import GraphConverter
 
 
 class TramLine(object):
@@ -19,9 +20,11 @@ class TramLine(object):
         self.reverse_route = dl.load_single_line(number, reverse_direction)  # Return route
         self.stops = dl.load_tram_stops(self.defult_route)  # List of shapely.Point objects
         self.current_route = self.defult_route
+        self.route_in_order = GraphConverter.find_route_in_order(dl, self)
         self.route_iterator = RouteIterator(self.current_route)
 
-    def next_coords(self):  # Returns next coodinates of tram route or 'LOOP' if tram is on a loop and needs to turn back
+    def next_coords(self):
+        # Returns next coodinates of tram route or 'LOOP' if tram is on a loop and needs to turn back
         temp = (next(self.route_iterator.route[0], 'LOOP'), next(self.route_iterator.route[1], 'LOOP'))
 
         if self.check_if_loop(temp):
@@ -41,8 +44,6 @@ class TramLine(object):
     def apply_bypass(self):
         pass
 
-
-"""
     def show(self, with_stops=True):
         # Development tool. Plot line
         if isinstance(self.current_route, MultiLineString):
@@ -54,4 +55,3 @@ class TramLine(object):
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
 
         plt.show()
-"""
