@@ -1,0 +1,39 @@
+{%extends 'final_graph.html' %}
+
+{% block style %}
+#map_id {
+                    position: relative;
+                    width: 80.0% !important;
+                    height: 80.0% !important;
+                    left: 0.0%;
+                    top: 0.0%;s
+                }
+{% endblock %}
+{% block body %}
+            <div id="panel" >
+                <form method="POST">
+                <input name="text" id ="clicked_coordinates" style="width:80%;">
+                <button type="submit" name="submit">Submit</button>
+                </form>
+            </div>
+{% endblock %}
+
+{% block script %}
+
+         var coordinates = []
+
+
+
+
+     map_id.on('click',function(e){
+                            var coord = e.latlng.toString().split(',');
+                            var lat = coord[0].split('(');
+                            var lng = coord[1].split(')');
+
+                            coordinates.push(lat+","+lng);
+
+                            document.getElementById("clicked_coordinates").value=  coordinates ;
+                        });
+
+
+{% endblock%}

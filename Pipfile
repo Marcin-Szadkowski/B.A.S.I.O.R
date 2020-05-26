@@ -15,6 +15,7 @@ pyscaffold = "*"
 matplotlib = "*"
 geojson = "*"
 flask = "*"
+shapely = "*"
 
 [requires]
 python_version = "3.8"

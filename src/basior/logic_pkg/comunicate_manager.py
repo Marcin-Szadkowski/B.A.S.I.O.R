@@ -1,15 +1,15 @@
-import random
 class ComuinicateManager:
 
-
     """comunicates given to client"""
-
     @staticmethod
     def send_trams_coords(trams):
         info = {}
         info["type"] = "tram"
         for i in range(len(trams)):
-            info[trams[i].number] = (next(trams[i].route_iterator[0]), next(trams[i].route_iterator[1]))
+            info[trams[i].number] = (next(trams[i].route_iterator[0][0]), next(trams[i].route_iterator[0][1]))
+
+            trams[i].route_iterator[1] += 1
+            trams[i].route_iterator[1] %= len(trams[i].current_route.xy[0])
 
         return info
 
