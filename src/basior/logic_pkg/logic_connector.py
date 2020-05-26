@@ -22,8 +22,13 @@ class LogicConnector(Thread):
     def load_data(self):
         all_trams_data = self.Loader.load_all_lines()
 
-        for elem in all_trams_data:
-            self.trams.append(TramLine(str(elem[0]), str(elem[1]), self.Loader))
+        for i in range(0, len(all_trams_data), 2):
+            self.trams.append(
+                TramLine(str(all_trams_data[i][0]), str(all_trams_data[i][1]), str(all_trams_data[i + 1][1]),
+                         self.Loader))
+            self.trams.append(
+                TramLine(str(all_trams_data[i + 1][0]), str(all_trams_data[i + 1][1]), str(all_trams_data[i][1]),
+                         self.Loader, is_reversed=True))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
 
