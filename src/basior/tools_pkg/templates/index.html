@@ -26,14 +26,13 @@
 
 
      map_id.on('click',function(e){
-                            var coord = e.latlng.toString().split(',');
-                            var lat = coord[0].split('(');
-                            var lng = coord[1].split(')');
+                    var coord = e.latlng.toString().split(',');
+                    var lat = coord[0].split('(');
+                    var lng = coord[1].split(')');
 
-                            coordinates.push(lat+","+lng);
-
-                            document.getElementById("clicked_coordinates").value=  coordinates ;
-                        });
+                    coordinates.push(lat+","+lng);
+                    document.getElementById("clicked_coordinates").value=  coordinates ;
+    });
 
 
 {% endblock%}

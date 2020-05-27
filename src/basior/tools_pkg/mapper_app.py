@@ -1,18 +1,14 @@
 from flask import *
-from functools import wraps
-import sqlite3
-import osmnx as ox
-#mapper app
 import osmnx as ox
 from IPython.display import IFrame
-
-from scrapy.http import HtmlResponse
-import bs4 as bs
 from bs4 import BeautifulSoup
+import shutil
+
+
+"""program shows behaviour of graph after deleting node"""
 
 app = Flask(__name__)
-#{% block body %} {% endblock %}
-#{% block script %} {% endblock %}
+shutil.copy('data/osmnx_graph_origin.graphml','data/osmnx_graph.graphml')
 G = ox.load_graphml('osmnx_graph.graphml')
 ox.config(log_console=True, use_cache=True)
 
@@ -23,8 +19,11 @@ def home():
     return render_template('index.html')
 
 
+"""function gets data from  template"""
+
+
 @app.route('/', methods=["POST"])
-def some_function():
+def get_data():
     text = request.form.get('text')
 
     text = text.split(',')
@@ -37,9 +36,6 @@ def some_function():
         if t in banned:
             text.remove(t)
 
-    for element in text:
-        element = float(element)
-
     with open("chosen_coordinates_destory_documentation.txt", "w") as output:
         output.write(str(text))
 
@@ -47,30 +43,22 @@ def some_function():
     osmnx_response(text)
     return render_template('index.html')
 
+
+"""function removes nodes nearest to chosen and saves graph"""
+
+
 def osmnx_response(coordinates):
-    edges = []
-    print("przed zabiegiem ", len(G.edges))
-    for i in range(0,len(coordinates)-2,2):
-        nr_edge = ox.get_nearest_edge(G,(float(coordinates[i]),float(coordinates[i+1])))
+    for i in range(0, len(coordinates) - 2, 2):
+        nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
         G.remove_edge(nr_edge[1], nr_edge[2])
-    print("po zbiegu ", len(G.edges))
-    ox.save_graphml(G,filename='osmnx_graph.graphml')
+
+    ox.save_graphml(G, filename='osmnx_graph.graphml')
     make_updated_graph_model()
+
     return render_template('index.html')
 
 
-
-
-
-
-    fig, ax = ox.plot_graph(G)
-
-
-
-
-
-   # print("nearest edgge ",ox.get_nearest_edge(G,[float(coordinates[0]),float(coordinates[1])].remove()))
-    return 0
+"""function create template updated based on graph"""
 
 
 def make_updated_graph_model():
@@ -89,7 +77,7 @@ def make_updated_graph_model():
 
     js_tag = soup.find_all("script")
     js_tag[5].append('{% block script %} {% endblock %}')
-    print(js_tag[5])
+
 
     with open("templates/graph.html", "w") as file:
         file.write(str(soup))
@@ -121,11 +109,10 @@ def make_updated_graph_model():
     soup.style.append(data_style)
     with open("templates/final_graph.html", "w") as file:
         file.write(str(soup))
-    # fig,ax = ox.plot_graph(G)"""
+
 
 def run():
     app.run(debug=True, threaded=True)
-
 
 
 if __name__ == '__main__':
