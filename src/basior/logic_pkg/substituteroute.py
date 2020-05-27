@@ -22,6 +22,9 @@ class SubstituteRoute:
         # Te komponenty uporzadkujemy na podstawie route
         components = list(nx.connected_components(sub_graph))  # list of sets
         components = [list(component) for component in components]
+        # jezeli trasa nie zostala rozspojniona to zwroc jego domyslna trase
+        if len(components) == 1:
+            return tram_line.default_route
         place_dict = dict()
         for k in components:
             if k[0] in route:
