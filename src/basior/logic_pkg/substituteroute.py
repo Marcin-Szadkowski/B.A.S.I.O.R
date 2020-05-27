@@ -97,7 +97,9 @@ class SubstituteRoute:
                 new_route = nx.dag_longest_path(sub_graph)
                 sub_graph = graph.subgraph(new_route)
             # Finally make new LineString
-            tram_line.current_route = GraphConverter.route_to_line_string(sub_graph)
+            return GraphConverter.route_to_line_string(sub_graph)
+        else:
+            return None
 
     @staticmethod
     def connect_components(graph, k1, k2):
