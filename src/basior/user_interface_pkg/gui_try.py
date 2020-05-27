@@ -2,11 +2,11 @@ from basior.client_pkg.client import Client
 import random
 import ast
 import json
+
+from basior.logic_pkg.comunicate_manager import ComuinicateManager
 from flask import Flask, Response, render_template, url_for, request, flash
 from datetime import datetime
 import time
-
-
 
 app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
@@ -16,14 +16,13 @@ tramList = []
 
 @app.route('/')
 def index():
-
     if request.method == 'POST':
         manufacturer = request.form['manu']
         flash(str(manufacturer))
-    return render_template("index.html",tramList = tramList)
+    return render_template("index.html", tramList=tramList)
 
 
-#@app.route("/", methods=['POST'])
+# @app.route("/", methods=['POST'])
 @app.route("/animation")
 def load():
     return render_template('load_animation.html')
@@ -58,25 +57,16 @@ def time_feed():
                 if tram not in tramList:
                     tramList.append(tram)
 
-
-
-
     return Response(generate(temp), mimetype='text')
-
 
 
 @app.route('/', methods=["POST"])
 def some_function():
     text = request.form.get('text')
 
-
-
-
     TestClient.message_to_server(ComuinicateManager.send_destroy(text))
 
-    return render_template('index.html',tramList = tramList)
-
-
+    return render_template('index.html', tramList=tramList)
 
 
 def run():
