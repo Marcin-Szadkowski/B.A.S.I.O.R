@@ -3,6 +3,7 @@ import random
 import ast
 import json
 from flask import Flask, Response, render_template, url_for, request, flash
+from basior.logic_pkg.comunicate_manager import ComuinicateManager
 from datetime import datetime
 import time
 
@@ -44,11 +45,13 @@ def time_feed():
     def generate(temp):
         yield json.dumps(temp)
 
-    time.sleep(2)
+    time.sleep(1)
     temp = TestClient.check_changes()
     print(temp)
 
+
     if temp is not False:
+        print("length",len(temp))
         print(json.loads(temp[0])["type"])
 
         if json.loads(temp[0])["type"] == "ready":
@@ -60,6 +63,9 @@ def time_feed():
 
 
 
+    if temp is not False and len(temp)>1:
+        for i in range(len(temp)):
+            return Response(generate(temp[i]), mimetype='text')
 
     return Response(generate(temp), mimetype='text')
 
@@ -67,12 +73,37 @@ def time_feed():
 
 @app.route('/', methods=["POST"])
 def some_function():
-    text = request.form.get('text')
+    text = request.form['text']
+
+
+    if len(text) == 0:
+        text = request.form['text2']
+
+        if text == 'stop':
+            info = {}
+            info["type"] = "stop_showing_path"
+            TestClient.message_to_server(info)
+        else:
+            info = {}
+            info["type"] = "get_tram_path"
+            info["line"] = text
+            TestClient.message_to_server(info)
+    else:
+
+
+        #text = text.split(',')
+
+        cors = []
+        cors.append(float('3.123'))
+        cors.append(float('4.123'))
+
+        dict = {}
+        dict["type"] = "destroy"
+        dict["coordinates"] = cors
 
 
 
-
-    TestClient.message_to_server(ComuinicateManager.send_destroy(text))
+        TestClient.message_to_server(dict)
 
     return render_template('index.html',tramList = tramList)
 

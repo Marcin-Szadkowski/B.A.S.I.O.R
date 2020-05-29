@@ -77,15 +77,18 @@ $(document).ready(function () {
 
         <input name="text" id ="clicked_coordinates">
         <button type="submit" name="submit">Submit</button>
-    </form>
-               <div id="mapid2" style ="width:1200px; height:700px"></div>
-               <form name="tram_line_select" action ='' method="POST" >
-                      <select name="manu">
+
+                 <select name="manu" id="select" onchange="set_val()">
             {% for manu in tramList %}
-                <option  value="{{ manu }}">{{ manu }}</option>
+                <option name="option" id="option" value="{{ manu }}">{{ manu }}</option>
             {% endfor %}
              </select>
+                   <input name="text2" id ="text2">
              <button type="submit" name="get_line_route">Submit</button>
+    </form>
+
+               <form name="tram_line_select" action ='' method="POST" >
+
           </form>
 
 
@@ -109,6 +112,11 @@ $(document).ready(function () {
     }, 'slow');
 });
 </script>
+
+
+
+
+
     <!-- section scripts-->
     <script type = "text/javascript">
     let progress = document.getElementById('progressbar');
@@ -117,10 +125,22 @@ $(document).ready(function () {
         let progressHeight = (window.pageYOffset/totalHeight)*100;
         progress.style.height = progressHeight + "%"
     }
+
+
+
     </script>
 
 
+
+
     <script type = "text/javascript">
+
+
+   function set_val(){
+   document.getElementByName('text2').value = document.getElementByName('manu').value;
+
+}
+
 
 
     function pickRandomColor(){
@@ -135,7 +155,7 @@ $(document).ready(function () {
 
 
          var mymap = L.map('mapid').setView([51.107883, 17.038538], 13);
-         var mymap_2 = L.map('mapid2').setView([51.107883, 17.038538], 13);
+
 
        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
@@ -145,15 +165,6 @@ $(document).ready(function () {
         zoomOffset: -1,
         accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thOXpxMm5yMG5pczM0czl6ZXh1NzlwMSJ9.G-GetrXxvkISp-NNHQS4sA'
       }).addTo(mymap);
-
-       L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thZ2w3cWJwMDR6ZTJybHN6dnV6dnFvZSJ9.jlGLkYp8RrDurzGo_qXmDQ'
-      }).addTo(mymap_2);
 
 
 
@@ -170,6 +181,7 @@ $(document).ready(function () {
         mapMarkers3 = [];
         var circles=[];
         var paths = [];
+
 
 
 
@@ -193,7 +205,7 @@ $(document).ready(function () {
         .then(response => {
                 response.text().then(t => {
 
-                console.log("length " + JSON.parse(t));
+                console.log("length " + JSON.parse(JSON.parse(t)));
                 /* console.log("xd " + JSON.parse(JSON.parse(t))["type"]); */
                 console.log("xd " + JSON.parse(JSON.parse(t)).length);
 

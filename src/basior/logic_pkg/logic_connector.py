@@ -5,6 +5,7 @@ from .dataloader import DataLoader
 from .tramline import TramLine
 from .comunicate_manager import ComuinicateManager
 from .substituteroute import SubstituteRoute
+import random
 
 
 class LogicConnector(Thread):
@@ -16,6 +17,7 @@ class LogicConnector(Thread):
         self.route_iterator = []
         self.next_move = None
         self.Loader = DataLoader()
+        self.path = None
 
         self.load_data()
 
@@ -26,19 +28,23 @@ class LogicConnector(Thread):
             self.trams.append(TramLine(str(elem[0]), str(elem[1]), self.Loader))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
-
+        print(message)
         type = json.loads(json.dumps(message))["type"]
-        if type == 'destroy':
-            if self.next_move is None:
-                self.next_move = self.Comunicates.send_path(self.trams, "2")
-                self.State = not self.State
+        if type == 'get_tram_path':
+            self.path = str(random.randint(0,5))
+        elif type == 'stop_showing_path':
+            self.path = None
+
+           # print(self.path)
+
+
+
 
     def get_state(
             self):  # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
         return self.State
 
-    def get_changes(
-            self):  # Used by ClientHandler to get changelog of simulation state in order to deliver it to Client
+    def get_changes( self):  # Used by ClientHandler to get changelog of simulation state in order to deliver it to Client
         temp = self.next_move.copy()
         self.next_move = None
 
@@ -47,13 +53,37 @@ class LogicConnector(Thread):
         return json.dumps(temp)
 
     def run(self):
+
+        if self.next_move is None:
+            self.next_move = ComuinicateManager.send_tram_lines(self.trams)
+            self.State = not self.State
+        time.sleep(0.5)
+
+        if self.next_move is None:
+            self.next_move = ComuinicateManager.send_update()
+            self.State = not self.State
+        time.sleep(0.5)
+
         while True:
+
+            if self.next_move is None:
+                if self.path is not None:
+                    self.next_move = self.Comunicates.send_path(self.trams, self.path)
+                    self.State = not self.State
+
+
+            time.sleep(0.5)
 
             if self.next_move is None:
                 self.next_move = ComuinicateManager.send_trams_coords(self.trams)
                 self.State = not self.State
+            time.sleep(0.5)
 
-            time.sleep(1)
+
+
+        time.sleep(1)
+
+
 
     def check_routes(self, coords):  # Method to check how deleting edges influences tram routes and takes care of it
 
@@ -68,5 +98,6 @@ class LogicConnector(Thread):
 
         self.next_move = self.Comunicates.send_trams_coords(self.trams)
         self.State = not self.State
+
 
         time.sleep(1)
