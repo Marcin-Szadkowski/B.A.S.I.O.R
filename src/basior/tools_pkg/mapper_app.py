@@ -48,9 +48,26 @@ def get_data():
 
 
 def osmnx_response(coordinates):
-    for i in range(0, len(coordinates) - 2, 2):
+
+    dict = {}
+    dict["type"] = "edges"
+    edges = []
+    touple = []
+
+    for i in range(0, len(coordinates), 2):
         nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
+
+        touple.append([nr_edge[1],nr_edge[2]])
+
+        if len(touple) == 2:
+            edges.append(touple)
+            touple = []
+
         G.remove_edge(nr_edge[1], nr_edge[2])
+
+    dict["data"] = edges
+    with open("edges.txt", "w") as output:
+        output.write(str(dict))
 
     ox.save_graphml(G, filename='osmnx_graph.graphml')
     make_updated_graph_model()
