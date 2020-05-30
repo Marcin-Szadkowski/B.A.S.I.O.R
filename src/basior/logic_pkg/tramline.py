@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
+from basior.logic_pkg.graphconverter import GraphConverter
 from shapely.geometry import MultiLineString
-from .route_iterator import RouteIterator
 
 
 class TramLine(object):
@@ -18,6 +18,7 @@ class TramLine(object):
         self.default_route = dl.load_single_line(number, direction_to)  # As you can default_route is type LineString
         self.stops = dl.load_tram_stops(self.default_route)  # List of shapely.Point objects
         self.current_route = self.default_route
+        self.route_in_order = GraphConverter.find_route_in_order(dl, self)
 
 
 """

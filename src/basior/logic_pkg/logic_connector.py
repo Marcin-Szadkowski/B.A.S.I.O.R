@@ -4,8 +4,9 @@ import json
 from .dataloader import DataLoader
 from .tram import Tram
 from .comunicate_manager import ComuinicateManager
+from .city_graph import CityGraph
 from .substituteroute import SubstituteRoute
-
+import osmnx as ox
 
 class LogicConnector(Thread):
     def __init__(self):
@@ -14,6 +15,7 @@ class LogicConnector(Thread):
         self.trams = []
         self.next_move = None
         self.Loader = DataLoader()
+        self.city_graph = CityGraph(self.Loader.graph.copy())
 
         self.load_data()
 
@@ -56,9 +58,13 @@ class LogicConnector(Thread):
                 self.next_move = ComuinicateManager.send_trams_coords(self.trams)
                 self.State = not self.State
 
-            time.sleep(1)
+            time.sleep(0.3)
 
     def check_routes(self, coords):  # Method to check how deleting edges influences tram routes and takes care of it
-        print(coords)
+        ox.plot_graph(self.city_graph.graph)
+        self.city_graph.remove_edge(coords)
+        ox.plot_graph(self.city_graph.graph)
 
-        time.sleep(1)
+        for tram in self.trams:
+            temp_route = SubstituteRoute.calculate_bypass(self.city_graph.graph, tram.current_route)
+            tram.apply_bypass(temp_route)
