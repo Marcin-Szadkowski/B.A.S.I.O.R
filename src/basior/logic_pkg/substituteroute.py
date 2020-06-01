@@ -90,7 +90,11 @@ class SubstituteRoute:
                 new_route = nx.dag_longest_path(sub_graph)
                 sub_graph = graph.subgraph(new_route)
             # Finally make new LineString
-            return SubstituteRoute.merge_lines(GraphConverter.route_to_line_string(sub_graph))
+            temp = GraphConverter.route_to_line_string(sub_graph)
+            if isinstance(temp, LineString):
+                return temp
+            else:
+                return SubstituteRoute.merge_lines(temp)
         else:
             return None
 
