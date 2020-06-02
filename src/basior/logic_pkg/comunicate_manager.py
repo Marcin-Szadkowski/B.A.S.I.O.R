@@ -23,6 +23,7 @@ class ComuinicateManager:
             lines.append(trams[i].number)
 
         info["lines"] = lines
+        print("info   ",info  ," koniec info")
         return info
 
     @staticmethod
@@ -43,10 +44,11 @@ class ComuinicateManager:
         return info
 
     @staticmethod
-    def nodes_to_break(list_of_nodes_coordinates):
+    def nodes_to_break():
         info = {}
         info["type"] = "nodes_to_break"
-        info["coordinates"] = list_of_nodes_coordinates
+        cors = [[51.08751, 17.03653, 20], [51.10983, 17.07739, 50], [51.12244, 17.01267, 200], [51.11209, 17.01353, 10]]
+        info["coordinates"] = cors
         return info
 
     """comunicates given to server  """

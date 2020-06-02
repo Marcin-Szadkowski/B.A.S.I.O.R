@@ -5,6 +5,7 @@ import json
 
 from basior.logic_pkg.comunicate_manager import ComuinicateManager
 from flask import Flask, Response, render_template, url_for, request, flash
+from basior.logic_pkg.comunicate_manager import ComuinicateManager
 from datetime import datetime
 import time
 
@@ -12,6 +13,7 @@ app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
 
 tramList = []
+tramList.append('stop')
 
 
 @app.route('/')
@@ -31,9 +33,12 @@ def load():
 def create():
     if not TestClient.is_alive():
         TestClient.start()
-        time.sleep(2)
+        time.sleep(0.2)
         TestClient.message_to_server('START')
         start = False
+
+
+
 
 
 @app.route('/time_feed')
@@ -43,11 +48,23 @@ def time_feed():
     def generate(temp):
         yield json.dumps(temp)
 
-    time.sleep(2)
+    def send_instruction(instruction):
+
+
+        print("wysylam")
+        print(instruction)
+        list = []
+        list.append(instruction)
+        return Response(generate(list), mimetype='text')
+
+
+    #time.sleep(1)
     temp = TestClient.check_changes()
     print(temp)
 
+
     if temp is not False:
+        print("length",len(temp))
         print(json.loads(temp[0])["type"])
 
         if json.loads(temp[0])["type"] == "ready":
@@ -57,14 +74,40 @@ def time_feed():
                 if tram not in tramList:
                     tramList.append(tram)
 
-    return Response(generate(temp), mimetype='text')
+
+    if temp is not False and len(temp)>1:
+        for i in range(len(temp)):
+            print(i)
+            print("temp aktualny ",temp[i])
+            send_instruction(temp[i])
+            #return Response(generate(temp[i]), mimetype='text')
+
+    else:
+        return Response(generate(temp), mimetype='text')
+
 
 
 @app.route('/', methods=["POST"])
 def some_function():
-    text = request.form.get('text')
+    text = request.form['text']
 
-    TestClient.message_to_server(ComuinicateManager.send_destroy(text))
+
+    if len(text) == 0:
+        text = request.form['text2']
+
+        if text == 'stop':
+            info = {}
+            info["type"] = "stop_showing_path"
+            TestClient.message_to_server(info)
+        else:
+            info = {}
+            info["type"] = "get_tram_path"
+            info["line"] = text
+            TestClient.message_to_server(info)
+    else:
+
+
+        TestClient.message_to_server(ComuinicateManager.send_destroy(text))
 
     return render_template('index.html', tramList=tramList)
 
