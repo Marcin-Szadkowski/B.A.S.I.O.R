@@ -57,19 +57,20 @@ class LogicConnector(Thread):
 
         return json.dumps(temp)
 
+
     def run(self):
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_tram_lines(self.trams)
             self.State = not self.State
-        time.sleep(0.05)
+        time.sleep(0.09)
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_update()
             self.State = not self.State
-        time.sleep(0.05)
+        time.sleep(0.09)
 
-
+        delay = 0.05
         while True:
 
             if self.next_move is None:
@@ -77,12 +78,12 @@ class LogicConnector(Thread):
                     self.next_move = self.Comunicates.send_path(self.trams, self.path)
                     self.State = not self.State
 
-            time.sleep(0.09)
+            time.sleep(delay)
 
             if self.next_move is None:
                 self.next_move = ComuinicateManager.send_trams_coords(self.trams)
                 self.State = not self.State
-            time.sleep(0.09)
+            time.sleep(delay)
 
             """   if self.next_move is None:
                 self.next_move = ComuinicateManager.send_tram_lines(self.trams)

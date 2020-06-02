@@ -9,7 +9,8 @@
          <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
          <link rel="stylesheet" href="static/css/number_markers.css" />
         <!-- script for silding into map div after load-->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+
         <script type="text/javascript">
 
 $(document).ready(function () {
@@ -121,6 +122,7 @@ $(document).ready(function () {
 
     <!-- section scripts-->
     <script type = "text/javascript">
+
     let progress = document.getElementById('progressbar');
     let totalHeight = document.body.scrollHeight - window.innerHeight;
     window.onscroll = function(){
@@ -128,7 +130,17 @@ $(document).ready(function () {
         progress.style.height = progressHeight + "%"
     }
 
+    $(function(){
+        $("#select").change(function(){
 
+        var display = $("#select option:selected").text();
+        $("#text2").val(display);
+
+        })
+
+
+
+    })
 
 
     </script>
@@ -138,7 +150,6 @@ $(document).ready(function () {
 
     <script type = "text/javascript">
 
-  tram_lines = ["11","2","3","76","5","1"];
 
 
 
@@ -173,14 +184,8 @@ $(document).ready(function () {
 
 
 
-
-        var colors = {};
-
-       for(var i = 0; i< tram_lines.length; i++){
-        colors[tram_lines[i]] = pickRandomColor();
-
-        }
-
+        var tram_lines = [];
+         var colors = {};
         var markers = [];
        mapMarkers1 = [];
         mapMarkers3 = [];
@@ -211,13 +216,40 @@ $(document).ready(function () {
                 response.text().then(t => {
 
 
+                 var list = '{{tramList}}';
+                var res = list.split('&#39;');
+                res.pop();
+                res.splice(0,1);
+                for(var i = res.length-1;i--;){
+                if(res[i] == ', ')res.splice(i,1);
+                }
+                res.splice(0,1);
 
+               tram_lines = res;
+              console.log(tram_lines);
+
+
+
+
+
+       for(var i = 0; i< tram_lines.length; i++){
+        if( colors[tram_lines[i]] == undefined){
+        colors[tram_lines[i]] = pickRandomColor();
+        }
+
+
+        }
+
+                console.log("tramList");
+
+
+                console.log(tram_lines);
                /*  console.log(t)
                 console.log("length " + JSON.parse(JSON.parse(t)));
                  console.log("xd " + JSON.parse(JSON.parse(t))["type"]);
                 console.log("xd " + JSON.parse(JSON.parse(t)).length);*/
 
-
+                /*[&#39;stop&#39;, &#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;, &#39;11&#39;, &#39;33&#39;, &#39;70&#39;, &#39;76&#39;]*/
 
 
                      var data=JSON.parse(JSON.parse(t))

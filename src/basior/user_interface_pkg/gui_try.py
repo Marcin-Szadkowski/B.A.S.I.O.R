@@ -34,7 +34,7 @@ def load():
 def create():
     if not TestClient.is_alive():
         TestClient.start()
-        time.sleep(2)
+        time.sleep(0.2)
         TestClient.message_to_server('START')
         start = False
 
