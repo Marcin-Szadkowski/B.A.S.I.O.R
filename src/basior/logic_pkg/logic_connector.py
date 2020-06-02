@@ -28,10 +28,15 @@ class LogicConnector(Thread):
             self.trams.append(TramLine(str(elem[0]), str(elem[1]), self.Loader))
 
     def push(self, message):  # Used by ClientHandler to deliver message form Client
+        print(self.trams)
         print(message)
         type = json.loads(json.dumps(message))["type"]
         if type == 'get_tram_path':
-            self.path = str(random.randint(0,5))
+            for tram in self.trams:
+                if tram.number == json.loads(json.dumps(message))["line"]:
+                    self.path = self.trams.index(tram)
+
+
         elif type == 'stop_showing_path':
             self.path = None
 
@@ -57,12 +62,13 @@ class LogicConnector(Thread):
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_tram_lines(self.trams)
             self.State = not self.State
-        time.sleep(0.5)
+        time.sleep(0.05)
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_update()
             self.State = not self.State
-        time.sleep(0.5)
+        time.sleep(0.05)
+
 
         while True:
 
@@ -71,13 +77,21 @@ class LogicConnector(Thread):
                     self.next_move = self.Comunicates.send_path(self.trams, self.path)
                     self.State = not self.State
 
-
-            time.sleep(0.5)
+            time.sleep(0.09)
 
             if self.next_move is None:
                 self.next_move = ComuinicateManager.send_trams_coords(self.trams)
                 self.State = not self.State
-            time.sleep(0.5)
+            time.sleep(0.09)
+
+            """   if self.next_move is None:
+                self.next_move = ComuinicateManager.send_tram_lines(self.trams)
+                self.State = not self.State
+
+            time.sleep(0.09)
+            """
+
+
 
 
 

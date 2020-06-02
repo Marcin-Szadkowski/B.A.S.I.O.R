@@ -29,6 +29,7 @@ $(document).ready(function () {
      <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
    crossorigin=""></script>
+   <script>myVar = myFunc({{tramList | tojson}})</script>
 
 
 
@@ -78,7 +79,7 @@ $(document).ready(function () {
         <input name="text" id ="clicked_coordinates">
         <button type="submit" name="submit">Submit</button>
 
-                 <select name="manu" id="select" onchange="set_val()">
+                 <select name="manu" id="select" onchange="set_val()" >
             {% for manu in tramList %}
                 <option name="option" id="option" value="{{ manu }}">{{ manu }}</option>
             {% endfor %}
@@ -89,6 +90,7 @@ $(document).ready(function () {
 
                <form name="tram_line_select" action ='' method="POST" >
 
+          </form>
           </form>
 
 
@@ -128,6 +130,7 @@ $(document).ready(function () {
 
 
 
+
     </script>
 
 
@@ -135,11 +138,8 @@ $(document).ready(function () {
 
     <script type = "text/javascript">
 
+  tram_lines = ["11","2","3","76","5","1"];
 
-   function set_val(){
-   document.getElementByName('text2').value = document.getElementByName('manu').value;
-
-}
 
 
 
@@ -168,10 +168,15 @@ $(document).ready(function () {
 
 
 
-        tram_lines = ["1","2","3","4","5","11","33","70","76"]
+
+
+
+
+
+
         var colors = {};
 
-        for(var i = 0; i< tram_lines.length; i++){
+       for(var i = 0; i< tram_lines.length; i++){
         colors[tram_lines[i]] = pickRandomColor();
 
         }
@@ -205,17 +210,21 @@ $(document).ready(function () {
         .then(response => {
                 response.text().then(t => {
 
+
+
+               /*  console.log(t)
                 console.log("length " + JSON.parse(JSON.parse(t)));
-                /* console.log("xd " + JSON.parse(JSON.parse(t))["type"]); */
-                console.log("xd " + JSON.parse(JSON.parse(t)).length);
+                 console.log("xd " + JSON.parse(JSON.parse(t))["type"]);
+                console.log("xd " + JSON.parse(JSON.parse(t)).length);*/
 
 
-                for(var i = 0; i<1; i++ )
-                {
+
 
                      var data=JSON.parse(JSON.parse(t))
 
                      console.log(data)
+
+
 
 
 
@@ -282,8 +291,8 @@ $(document).ready(function () {
                          fillColor : '#f03',
                          fillOpacity : 0
                         }
-1
-                         circle = L.circle(nodes[i],15,circleOptions).addTo(mymap);
+
+                         circle = L.circle([nodes[i][0], nodes[i][1]],15,circleOptions).addTo(mymap);
                         circles.push(circle);
 
                         }
@@ -309,13 +318,46 @@ $(document).ready(function () {
 
                       else if ( type.localeCompare("bus_lines") == 0 ){
                        console.log("dostaje autobusy")
+                       console.log(data.lines);
+                       for(var i = 0 ; i< data.lines.length ; i++){
+
+                       /*tram_lines.indexOf(data.lines[i]) ===  -1 ?  tram_lines.push(data.lines[i]) : console.log("tramwaj istnieje");*/
+
+
+
+
+                       }
+
+
+                     }
+                     else if ( type.localeCompare("areas") == 0 ){
+                       console.log("dostaje obszary ")
+                        nodes = data.coordinates;
+
+
+                        for (var i = 0; i < circles.length; i++) {
+                              mymap.removeLayer(circles[i]);
+                              }
+
+
+                        for (var i = 0; i < nodes.length; i++) {
+
+                        var circleOptions = {
+                         color : 'green',
+                         fillColor : '#f03',
+                         fillOpacity : 0
+                        }
+
+                         circle = L.circle(nodes[i],nodes[i][2],circleOptions).addTo(mymap);
+                        circles.push(circle);
+
+                        }
+
+
 
 
                      }
 
-
-
-                }
 
 
 
@@ -323,7 +365,7 @@ $(document).ready(function () {
                 })
 
             });
-        }, 500);
+        }, 100);
 
      </script>
 

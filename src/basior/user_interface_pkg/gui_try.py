@@ -13,6 +13,7 @@ app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
 
 tramList = []
+tramList.append('stop')
 
 
 @app.route('/')
@@ -38,6 +39,9 @@ def create():
         start = False
 
 
+
+
+
 @app.route('/time_feed')
 def time_feed():
     create()
@@ -45,7 +49,17 @@ def time_feed():
     def generate(temp):
         yield json.dumps(temp)
 
-    time.sleep(1)
+    def send_instruction(instruction):
+
+
+        print("wysylam")
+        print(instruction)
+        list = []
+        list.append(instruction)
+        return Response(generate(list), mimetype='text')
+
+
+    #time.sleep(1)
     temp = TestClient.check_changes()
     print(temp)
 
@@ -65,9 +79,13 @@ def time_feed():
 
     if temp is not False and len(temp)>1:
         for i in range(len(temp)):
-            return Response(generate(temp[i]), mimetype='text')
+            print(i)
+            print("temp aktualny ",temp[i])
+            send_instruction(temp[i])
+            #return Response(generate(temp[i]), mimetype='text')
 
-    return Response(generate(temp), mimetype='text')
+    else:
+        return Response(generate(temp), mimetype='text')
 
 
 
@@ -93,17 +111,10 @@ def some_function():
 
         #text = text.split(',')
 
-        cors = []
-        cors.append(float('3.123'))
-        cors.append(float('4.123'))
-
-        dict = {}
-        dict["type"] = "destroy"
-        dict["coordinates"] = cors
 
 
 
-        TestClient.message_to_server(dict)
+        TestClient.message_to_server(ComuinicateManager.send_destroy(text))
 
     return render_template('index.html',tramList = tramList)
 
