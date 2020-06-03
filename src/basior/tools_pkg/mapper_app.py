@@ -9,14 +9,12 @@ import json
 """program shows behaviour of graph after deleting node and
    visualise chosen edges as a tram loop for a testing purposes"""
 
-
-
 """store as G osmnx Wroclaw tramline graph as a base for computation"""
 
 app = Flask(__name__)
 shutil.copy('data/osmnx_graph_origin.graphml', 'data/osmnx_graph.graphml')
 G = ox.load_graphml('osmnx_graph.graphml')
-ox.config(log_console = True, use_cache = True)
+ox.config(log_console=True, use_cache=True)
 
 """Polyline object stores loops chosen during usage"""
 
@@ -48,7 +46,7 @@ def get_data():
             dict = osmnx_response(text, "loop")
 
             with open("tram_loops.json", "w") as output:
-                json.dump(dict,output)
+                json.dump(dict, output)
 
             ox.save_graphml(G, filename='osmnx_graph.graphml')
             make_updated_graph_model()
@@ -63,7 +61,6 @@ def get_data():
 
         with open("edges.json", "w") as output:
             json.dump(dict, output)
-
 
         ox.save_graphml(G, filename='osmnx_graph.graphml')
         make_updated_graph_model()
@@ -80,27 +77,43 @@ def osmnx_response(coordinates, type):
     edges = []
     touple = []
 
-    for i in range(0, len(coordinates), 2):
-        nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
+    if type == "loop":
 
-        touple.append([nr_edge[1], nr_edge[2]])
+        for i in range(0, len(coordinates), 2):
+            nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
 
-        for i in range(len(G[nr_edge[1]][nr_edge[2]])):
-            if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
-                key = i
-                touple[-1].append(key)
+            touple.append([nr_edge[1], nr_edge[2]])
 
-        if len(touple) == 2:
-            print("touple ", touple)
-            edges.append(touple)
-            touple = []
-        if type == "loop":
+            for i in range(len(G[nr_edge[1]][nr_edge[2]])):
+                if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
+                    key = i
+                    touple[-1].append(key)
+
+            if len(touple) == 2:
+                print("touple ", touple)
+                edges.append(touple)
+                touple = []
+
             polyline_string.update_polyline(nr_edge[0])
 
-        if type == "remove_edge":
+    else:
+
+        for i in range(0, len(coordinates), 2):
+            nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
+
+            touple = [nr_edge[1], nr_edge[2]]
+
+            for i in range(len(G[nr_edge[1]][nr_edge[2]])):
+                if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
+                    key = i
+                    touple.insert(len(touple), key)
+
+            edges.append(touple)
             G.remove_edge(nr_edge[1], nr_edge[2], key)
+            touple = []
 
     dict["data"] = edges
+    print(edges)
 
     return dict
 
@@ -157,6 +170,7 @@ def make_updated_graph_model():
     with open("templates/final_graph.html", "w") as file:
         file.write(str(soup))
 
+
 def remove_banned_words_from_input(text):
     banned = ['LatLng', '']
     for t in text:
@@ -166,6 +180,7 @@ def remove_banned_words_from_input(text):
         if t in banned:
             text.remove(t)
     return text
+
 
 def run():
     app.run(debug=True, threaded=True)
