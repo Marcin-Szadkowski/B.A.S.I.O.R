@@ -1,0 +1,83 @@
+{%extends 'final_graph.html' %}
+
+{% block style %}
+#map_id {
+                    position: relative;
+                    width: 80.0% !important;
+                    height: 80.0% !important;
+                    left: 0.0%;
+                    top: 0.0%;s
+                }
+{% endblock %}
+{% block body %}
+            <div id="panel" >
+                <form method="POST">
+                <label><input type ="checkbox" id = "checkbox_edge" value="delete_edge">delete_edge</label>
+                <label><input type ="checkbox"  id = "checkbox_loops"  value="make_loop">make_loop</label>
+                <div>
+                     <input name="text" id ="clicked_coordinates" style="width:80%;float:left;">
+
+                </div>
+                 <div>
+
+                    <input name="text2" id ="tram_loops" style="width:80%;float:left;">
+                 </div>
+
+
+                <button type="submit" name="submit">Submit</button>
+                </form>
+                <div>
+                    <p></p>
+                </div>
+            </div>
+{% endblock %}
+
+{% block script %}
+    var coordinates_loops = []
+    var coordinates_edges = []
+
+
+    const checkbox_edge = document.getElementById('checkbox_edge')
+
+    checkbox_edge.addEventListener('change', (event) => {
+                  if (event.target.checked) {
+                    alert('Now choose edges to remove .  Remember to leave only one checkbox checked.');
+                  } else {
+                   coordinates_loops = []
+                  }
+    })
+
+    const checkbox_loops = document.getElementById('checkbox_loops')
+
+    checkbox_loops.addEventListener('change', (event) => {
+                  if (event.target.checked) {
+                    alert('Now choose loops to add. Remember to leave only one checkbox checked.If u want to clear loops, type "stop" in second field');
+                  } else {
+                    coordinates_edges = []
+                  }
+    })
+
+
+     map_id.on('click',function(e){
+                    var coord = e.latlng.toString().split(',');
+                    var lat = coord[0].split('(');
+                    var lng = coord[1].split(')');
+
+                    if(document.getElementById("checkbox_edge").checked == true && document.getElementById("checkbox_loops").checked == false){
+
+                         coordinates_edges.push(lat+","+lng);
+
+                    document.getElementById("clicked_coordinates").value=  coordinates_edges ;
+                    }
+                    if(document.getElementById("checkbox_edge").checked == false && document.getElementById("checkbox_loops").checked == true){
+                         coordinates_loops.push(lat+","+lng);
+                    document.getElementById("tram_loops").value=  coordinates_loops ;
+                    }
+
+    });
+
+    /*there are injected loops created by user*/
+    {{string}}
+
+
+{% endblock%}

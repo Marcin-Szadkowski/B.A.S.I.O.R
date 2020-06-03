@@ -20,6 +20,7 @@ class SubstituteRoute:
         sub_graph = nx.to_undirected(sub_graph)
         # Komponenty skladowe mozna liczyc tylko dla grafow nieskierowanych
         # Te komponenty uporzadkujemy na podstawie route
+
         components = list(nx.connected_components(sub_graph))  # list of sets
         components = [list(component) for component in components]
         # jezeli trasa nie zostala rozspojniona to zwroc jego domyslna trase
@@ -89,13 +90,17 @@ class SubstituteRoute:
                 new_route = nx.dag_longest_path(sub_graph)
                 sub_graph = graph.subgraph(new_route)
             # Finally make new LineString
-            return GraphConverter.route_to_line_string(sub_graph)
+            temp = GraphConverter.route_to_line_string(sub_graph)
+            if isinstance(temp, LineString):
+                return temp
+            else:
+                return SubstituteRoute.merge_lines(temp)
         else:
             return None
 
     @staticmethod
     def connect_components(graph, k1, k2):
-        min_length = 5000  # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
+        min_length = 5000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
         path = None
         for v in k1:
             for w in k2:
@@ -129,3 +134,21 @@ class SubstituteRoute:
         for e in edges_from_graph:
             sub_graph.add_edge(e[0], e[1], **e[2])
         return sub_graph
+
+    @staticmethod
+    def merge_lines(lines):
+        last = None
+        points = []
+        for line in lines:
+            current = line.coords[0]
+
+            if last is None:
+                points.extend(line.coords)
+            else:
+                if last == current:
+                    points.extend(line.coords[1:])
+                else:
+                    print('Skipping to merge {} {}'.format(last, current))
+                    return None
+            last = line.coords[-1]
+        return LineString(points)
