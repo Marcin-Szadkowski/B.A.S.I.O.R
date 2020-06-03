@@ -5,18 +5,17 @@ from bs4 import BeautifulSoup
 import shutil
 from polyline_string import PolyLine_String
 import json
+import os
 
 """program shows behaviour of graph after deleting node and
    visualise chosen edges as a tram loop for a testing purposes"""
-
-
 
 """store as G osmnx Wroclaw tramline graph as a base for computation"""
 
 app = Flask(__name__)
 shutil.copy('data/osmnx_graph_origin.graphml', 'data/osmnx_graph.graphml')
 G = ox.load_graphml('osmnx_graph.graphml')
-ox.config(log_console = True, use_cache = True)
+ox.config(log_console=True, use_cache=True)
 
 """Polyline object stores loops chosen during usage"""
 
@@ -43,12 +42,19 @@ def get_data():
             polyline_string.polyline_string = ""
             return render_template('index.html', string=polyline_string.polyline_string)
 
+        if text == "clear":
+            remove_file_content("tram_loops.json")
+            return render_template('index.html', string=polyline_string.polyline_string)
+
         else:
             text = remove_banned_words_from_input(text.split(','))
             dict = osmnx_response(text, "loop")
 
-            with open("tram_loops.json", "w") as output:
-                json.dump(dict,output)
+            if check_if_exist('tram_loops.json'):
+                append_to_edges(dict['data'], "tram_loops.json")
+
+            else:
+                create_json("tram_loops.json", dict)
 
             ox.save_graphml(G, filename='osmnx_graph.graphml')
             make_updated_graph_model()
@@ -58,11 +64,19 @@ def get_data():
     else:
 
         text = request.form.get('text')
+        if text == "clear":
+            remove_file_content("edges.json")
+            return render_template('index.html', string=polyline_string.polyline_string)
+
+
         text = remove_banned_words_from_input(text.split(','))
         dict = osmnx_response(text, "remove_edge")
 
-        with open("edges.json", "w") as output:
-            json.dump(dict, output)
+
+        if check_if_exist('edges.json'):
+            append_to_edges(dict['data'], "edges.json")
+        else:
+            create_json("edges.json", dict)
 
 
         ox.save_graphml(G, filename='osmnx_graph.graphml')
@@ -80,27 +94,43 @@ def osmnx_response(coordinates, type):
     edges = []
     touple = []
 
-    for i in range(0, len(coordinates), 2):
-        nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
+    if type == "loop":
 
-        touple.append([nr_edge[1], nr_edge[2]])
+        for i in range(0, len(coordinates), 2):
+            nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
 
-        for i in range(len(G[nr_edge[1]][nr_edge[2]])):
-            if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
-                key = i
-                touple[-1].append(key)
+            touple.append([nr_edge[1], nr_edge[2]])
 
-        if len(touple) == 2:
-            print("touple ", touple)
-            edges.append(touple)
-            touple = []
-        if type == "loop":
+            for i in range(len(G[nr_edge[1]][nr_edge[2]])):
+                if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
+                    key = i
+                    touple[-1].append(key)
+
+            if len(touple) == 2:
+                print("touple ", touple)
+                edges.append(touple)
+                touple = []
+
             polyline_string.update_polyline(nr_edge[0])
 
-        if type == "remove_edge":
+    else:
+
+        for i in range(0, len(coordinates), 2):
+            nr_edge = ox.get_nearest_edge(G, (float(coordinates[i]), float(coordinates[i + 1])))
+
+            touple = [nr_edge[1], nr_edge[2]]
+
+            for i in range(len(G[nr_edge[1]][nr_edge[2]])):
+                if str(G[nr_edge[1]][nr_edge[2]][i]['geometry']) == str(nr_edge[0]):
+                    key = i
+                    touple.insert(len(touple), key)
+
+            edges.append(touple)
             G.remove_edge(nr_edge[1], nr_edge[2], key)
+            touple = []
 
     dict["data"] = edges
+    print(edges)
 
     return dict
 
@@ -157,6 +187,7 @@ def make_updated_graph_model():
     with open("templates/final_graph.html", "w") as file:
         file.write(str(soup))
 
+
 def remove_banned_words_from_input(text):
     banned = ['LatLng', '']
     for t in text:
@@ -166,6 +197,45 @@ def remove_banned_words_from_input(text):
         if t in banned:
             text.remove(t)
     return text
+
+
+def write_json(data, filename):
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+
+
+def append_to_edges(arr, filename):
+    # function to add to JSON
+
+    with open(filename) as json_file:
+        data = json.load(json_file)
+
+        temp = data['data']
+
+        # python object to be appended
+        for i in range(len(arr)):
+            temp.append(arr[i])
+
+    write_json(data, filename)
+
+
+def check_if_exist(filename):
+    if os.stat(filename).st_size == 0:
+        return False
+    else:
+        return True
+
+
+def create_json(filename, dict):
+    with open(filename, "w") as output:
+        json.dump(dict, output)
+
+
+def remove_file_content(filename):
+    file = open(filename,"r+")
+    file.truncate(0)
+    file.close()
+
 
 def run():
     app.run(debug=True, threaded=True)
