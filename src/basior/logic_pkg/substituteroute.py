@@ -1,3 +1,4 @@
+from shapely.geometry import LineString
 from .graphconverter import GraphConverter
 import networkx as nx
 import osmnx as ox

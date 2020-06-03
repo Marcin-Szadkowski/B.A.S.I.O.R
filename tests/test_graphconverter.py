@@ -4,6 +4,7 @@ from tramline import TramLine
 from dataloader import DataLoader
 from graphconverter import GraphConverter
 import osmnx as ox
+from shapely import ops
 
 
 class TestGraphConverter(TestCase):
@@ -19,7 +20,6 @@ class TestGraphConverter(TestCase):
         """
         # Load data
         dl = DataLoader()
-        dl.update_graph()
         G = dl.graph
         lines_table = dl.load_all_lines()
 
@@ -32,8 +32,9 @@ class TestGraphConverter(TestCase):
             sub_graph = G.subgraph(nodes)
             ox.plot_graph(sub_graph)
             tram_line.current_route = GraphConverter.route_to_line_string(sub_graph)
-            tram_line.show()
             print(tram_line.current_route.contains(tram_line.stops[0]))
+            tram_line.show()
+
         self.assertTrue(True)
 
 

@@ -12,7 +12,6 @@ class MapDataLoader(object):
         for i in range(len(data)):
             self.loops.append(data[i])
 
-
         file = open('tram_loops.json.json', )
         f = json.load(file)
         f['data'] = self.loops
@@ -27,7 +26,7 @@ class MapDataLoader(object):
         f['data'] = self.deleted_edges
         file.close()
 
-    def create_edges_json(self,dict):
+    def create_edges_json(self, dict):
         with open("edges.json", "w") as output:
             json.dump(dict, output)
 
@@ -35,24 +34,16 @@ class MapDataLoader(object):
         with open("tram_loops.json", "w") as output:
             json.dump(dict, output)
 
-
     def get_loop_data(self):
-        file = open('edges.json', )
-        data = json.load(file)
-        file.close()
-
-        return data['data']
-
-    def get_deleted_edges(self):
         file = open('tram_loops.json', )
         data = json.load(file)
         file.close()
 
         return data['data']
 
+    def get_deleted_edges(self):
+        file = open('edges.json', )
+        data = json.load(file)
+        file.close()
 
-
-
-loader = MapDataLoader()
-print(loader.loops)
-print(loader.deleted_edges)
+        return data['data']

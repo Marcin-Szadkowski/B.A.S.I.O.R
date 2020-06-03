@@ -45,7 +45,8 @@ class TestSubstituteRoute(TestCase):
             sub_graph = G.subgraph(nodes)
             ox.plot_graph(sub_graph)
             # Now calculate bypas
-            SubstituteRoute.calculate_bypass(G, tram_line)
+            tram_line.current_route = SubstituteRoute.calculate_bypass(G, tram_line)
+            print(type(tram_line.current_route))
             tram_line.show()
             for e in deleted_edges:
                 G.add_edge(e[1], e[2], geometry=e[0])
