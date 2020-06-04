@@ -56,4 +56,4 @@ class Tram:
             if line.coords[i] == tuple(point):
                 return i
         """
-        return line.coords.index(tuple(point))
+        return list(line.coords).index(tuple(point))
