@@ -12,8 +12,7 @@ import time
 app = Flask(__name__)
 TestClient = Client(2137, '127.0.0.1')
 
-tramList = []
-tramList.append('stop')
+tramList = ['stop']
 
 
 @app.route('/')
@@ -38,9 +37,6 @@ def create():
         start = False
 
 
-
-
-
 @app.route('/time_feed')
 def time_feed():
     create()
@@ -50,21 +46,18 @@ def time_feed():
 
     def send_instruction(instruction):
 
-
         print("wysylam")
         print(instruction)
         list = []
         list.append(instruction)
         return Response(generate(list), mimetype='text')
 
-
-    #time.sleep(1)
+    # time.sleep(1)
     temp = TestClient.check_changes()
     print(temp)
 
-
     if temp is not False:
-        print("length",len(temp))
+        print("length", len(temp))
         print(json.loads(temp[0])["type"])
 
         if json.loads(temp[0])["type"] == "ready":
@@ -74,23 +67,20 @@ def time_feed():
                 if tram not in tramList:
                     tramList.append(tram)
 
-
-    if temp is not False and len(temp)>1:
+    if temp is not False and len(temp) > 1:
         for i in range(len(temp)):
             print(i)
-            print("temp aktualny ",temp[i])
+            print("temp aktualny ", temp[i])
             send_instruction(temp[i])
-            #return Response(generate(temp[i]), mimetype='text')
+            # return Response(generate(temp[i]), mimetype='text')
 
     else:
         return Response(generate(temp), mimetype='text')
 
 
-
 @app.route('/', methods=["POST"])
 def some_function():
     text = request.form['text']
-
 
     if len(text) == 0:
         text = request.form['text2']
@@ -105,7 +95,6 @@ def some_function():
             info["line"] = text
             TestClient.message_to_server(info)
     else:
-
 
         TestClient.message_to_server(ComuinicateManager.send_destroy(text))
 
