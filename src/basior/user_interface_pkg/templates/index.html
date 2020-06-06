@@ -1,214 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>B.A.S.I.O.R</title>
-        <link rel="stylesheet" href="static/css/styles_kwjp.css" />
-         <link rel="stylesheet" href="static/css/styles_kwjp.css" />
-         <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-         <link rel="stylesheet" href="static/css/number_markers.css" />
-        <!-- script for silding into map div after load-->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
 
-        <script type="text/javascript">
+{%extends 'base.html' %}
 
-$(document).ready(function () {
-    // Handler for .ready() called.
-    $('html, body').animate({
-        scrollTop: $('#mapid').offset().top
-    }, 'slow');
-});
-
-</script>
+{% block head %}
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="static/css/number_markers.css" />
 
 
          <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-   crossorigin=""/>
+       integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+       crossorigin=""/>
      <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
-   integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
-   crossorigin=""></script>
-   <script>myVar = myFunc({{tramList | tojson}})</script>
-
+       integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+       crossorigin="">
+     </script>
 
 
     <!-- END LEAFLET -->
-        <styles>
+    <styles>
+     .leaflet-div-icon {
+            background: transparent;
+            border: none;
+        }
 
-            .leaflet-div-icon {
-	background: transparent;
-	border: none;
-}
+        .leaflet-marker-icon .number{
+            position: relative;
+            top: -37px;
+            font-size: 12px;
+            width: 25px;
+            text-align: center;
+        }
 
-.leaflet-marker-icon .number{
-	position: relative;
-	top: -37px;
-	font-size: 12px;
-	width: 25px;
-	text-align: center;
-}
-        </styles>
-    </head>
-    <body >
-         <header>
-            <h1>B.A.S.I.O.R</h1>
-        </header>
+    </styles>
+
+{% endblock %}
 
 
-          <div class="container">
-            <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Asperiores harum veritatis
-                nemo magni odio reprehenderit atque, esse animi porro suscipit vero nobis modi quis.
-                Exercitationem quasi beatae, assumenda officia illum sunt. Cum voluptas maiores
-                vitae eius hic inventore deleniti placeat perferendis quam ut nostrum maxime optio
-                voluptatibus ab laboriosam, quia consectetur atque minus? Adipisci amet aut sint
-                voluptates delectus aperiam? Veniam ab illum enim in libero nihil culpa explicabo
-                perspiciatis veritatis non repellendus architecto excepturi nostrum porro voluptatem
-                aperiam animi asperiores, a voluptatibus temporibus minima voluptas ipsa! Recusandae
-                nostrum, aut, voluptates est error iusto, eaque excepturi soluta quas maiores amet.
-            </p>
 
-
-              <div id="mapid" style ="width:1200px; height:700px"></div>
-
+{% block body %}
 
 
     <form method="POST">
 
-        <input name="text" id ="clicked_coordinates">
-        <button type="submit" name="submit">Submit</button>
+                 <select name="delays" id="select_delay" onchange="set_val()" >
+                     {% for del in delays %}
+                         <option name="option_delay" id="option_delay" value="{{ del }}">{{ del }}</option>
+                     {% endfor %}
+                 </select>
 
-                 <select name="manu" id="select" onchange="set_val()" >
-            {% for manu in tramList %}
-                <option name="option" id="option" value="{{ manu }}">{{ manu }}</option>
-            {% endfor %}
-             </select>
-                   <input name="text2" id ="text2">
-             <button type="submit" name="get_line_route">Submit</button>
+
+                <input name="text3" id ="text3">
+                <button type="submit" name="submit_delay">Submit</button>
+                <button type="submit" name="submit_manual" >load manual page </button>
+
+                <div id="mapid" style ="width:96%; height:700px"></div>
+
+                <input name="text" id ="clicked_coordinates">
+                <button type="submit" name="submit_destroy">Submit</button>
+
+                <select name="manu" id="select" onchange="set_val()" >
+                    {% for manu in tramList %}
+                        <option name="option" id="option" value="{{ manu }}">{{ manu }}</option>
+                    {% endfor %}
+                </select>
+
+                <input name="text2" id ="text2">
+                <button type="submit" name="submit_route">Submit</button>
+
     </form>
+{% endblock %}
 
-               <form name="tram_line_select" action ='' method="POST" >
+{% block script %}
 
-          </form>
-          </form>
-
-
-
-
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="static/js/number_markers.js"></script>
+    <script>
 
 
-        </div>
-         <div id="progressbar"></div>
-        <div id="scrollPath"></div>
+        $(document).ready(function () {
+            // Handler for .ready() called.
+            $('html, body').animate({
+                scrollTop: $('#mapid').offset().top
+            }, 'slow');
+        });
 
 
-<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-  <script src="static/js/number_markers.js"></script>
+        $(function(){
+            $("#select_delay").change(function(){
 
-<script>
-            $(document).ready(function () {
-    // Handler for .ready() called.
-    $('html, body').animate({
-        scrollTop: $('#mapid').offset().top
-    }, 'slow');
-});
-</script>
+            var display = $("#select_delay option:selected").text();
+            $("#text3").val(display);
 
+            })
+        })
 
+         $(function(){
+            $("#select").change(function(){
 
+            var display = $("#select option:selected").text();
+            $("#text2").val(display);
 
-
-    <!-- section scripts-->
-    <script type = "text/javascript">
-
-    let progress = document.getElementById('progressbar');
-    let totalHeight = document.body.scrollHeight - window.innerHeight;
-    window.onscroll = function(){
-        let progressHeight = (window.pageYOffset/totalHeight)*100;
-        progress.style.height = progressHeight + "%"
-    }
-
-    $(function(){
-        $("#select").change(function(){
-
-        var display = $("#select option:selected").text();
-        $("#text2").val(display);
-
+            })
         })
 
 
+         /* losowanie koloru dla markera reprezentujacego tramwaj*/
 
-    })
+        function pickRandomColor(){
+              var colors = ['red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpuple', 'cadetblue'];
+              return colors[Math.floor(Math.random() * colors.length)];
+        }
 
-
-    </script>
-
-
-
-
-    <script type = "text/javascript">
+        var mymap = L.map('mapid').setView([51.107883, 17.038538], 13);
 
 
 
-
-
-    function pickRandomColor(){
-      var colors = ['red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpuple', 'cadetblue'];
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-/* skrypt na numerowane markery*/
-
-
-
-
-
-         var mymap = L.map('mapid').setView([51.107883, 17.038538], 13);
-
-
-       L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thOXpxMm5yMG5pczM0czl6ZXh1NzlwMSJ9.G-GetrXxvkISp-NNHQS4sA'
-      }).addTo(mymap);
-
-
-
-
-
-
-
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                maxZoom: 18,
+                id: 'mapbox/streets-v11',
+                tileSize: 512,
+                zoomOffset: -1,
+                accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thOXpxMm5yMG5pczM0czl6ZXh1NzlwMSJ9.G-GetrXxvkISp-NNHQS4sA'
+        }).addTo(mymap);
 
         var tram_lines = [];
-         var colors = {};
+        var colors = {};
         var markers = [];
-       mapMarkers1 = [];
+        mapMarkers1 = [];
         mapMarkers3 = [];
         var circles=[];
         var paths = [];
 
 
-
-
         mymap.on('click', function(e){
-          var coord = e.latlng;
-          var lat = coord.lat;
-          var lng = coord.lng;
-          document.getElementById("clicked_coordinates").value=toString(lat);
-          });
+            var coord = e.latlng;
+            var lat = coord.lat;
+            var lng = coord.lng;
+            document.getElementById("clicked_coordinates").value=toString(lat);
+        });
+
+
+        /* script thats passes chosen coordinates into textfield*/
 
         mymap.on('click',function(e){
-                            var coord = e.latlng.toString().split(',');
-                            var lat = coord[0].split('(');
-                            var lng = coord[1].split(')');
+                    var coord = e.latlng.toString().split(',');
+                    var lat = coord[0].split('(');
+                    var lng = coord[1].split(')');
+                    document.getElementById("clicked_coordinates").value=  + lat[1]+","+ lng[0] ;
+        });
 
-                            document.getElementById("clicked_coordinates").value=  + lat[1]+","+ lng[0] ;
-                        });
 
         setInterval(() => {
         fetch("{{ url_for('time_feed') }}")
@@ -216,190 +157,134 @@ $(document).ready(function () {
                 response.text().then(t => {
 
 
+                 /* unpack tramLines data*/
+
                  var list = '{{tramList}}';
-                var res = list.split('&#39;');
-                res.pop();
-                res.splice(0,1);
-                for(var i = res.length-1;i--;){
-                if(res[i] == ', ')res.splice(i,1);
-                }
-                res.splice(0,1);
+                 var res = list.split('&#39;');
+                 res.pop();
+                 res.splice(0,1);
+                 for(var i = res.length-1;i--;){
+                 if(res[i] == ', ')res.splice(i,1);
+                 }
+                 res.splice(0,1);
 
-               tram_lines = res;
-              console.log(tram_lines);
-
+                 tram_lines = res;
 
 
+                 for(var i = 0; i< tram_lines.length; i++){
+
+                    if( colors[tram_lines[i]] == undefined){
+
+                         colors[tram_lines[i]] = pickRandomColor();
+                    }
+                 }
+
+                 var data=JSON.parse(JSON.parse(t))
+                 var type = data.type
 
 
-       for(var i = 0; i< tram_lines.length; i++){
-        if( colors[tram_lines[i]] == undefined){
-        colors[tram_lines[i]] = pickRandomColor();
-        }
+                 /* rysowanie kolejnych wspolrzednych tramwajow*/
+
+                 if ( type.localeCompare("tram") == 0 ){
 
 
-        }
-
-                console.log("tramList");
-
-
-                console.log(tram_lines);
-               /*  console.log(t)
-                console.log("length " + JSON.parse(JSON.parse(t)));
-                 console.log("xd " + JSON.parse(JSON.parse(t))["type"]);
-                console.log("xd " + JSON.parse(JSON.parse(t)).length);*/
-
-                /*[&#39;stop&#39;, &#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;, &#39;11&#39;, &#39;33&#39;, &#39;70&#39;, &#39;76&#39;]*/
-
-
-                     var data=JSON.parse(JSON.parse(t))
-
-                     console.log(data)
-
-
-
-
-
-
-                     var type = data.type
-                     console.log("type " + type)
-
-
-                     /* rysowanie kolejnych wspolrzednych tramwajow*/
-
-                     if ( type.localeCompare("tram") == 0 ){
-
-
-                              for (var i = 0; i < markers.length; i++) {
-                              mymap.removeLayer(markers[i]);
-                              }
-
-                              n = 0
-                              while (n < tram_lines.length){
-
-                              var b = 0;
-                              list = [];
-                              list = data[tram_lines[n]];
-
-
-
-                              marker1 = L.marker([list[1],list[0]],{icon: new L.AwesomeNumberMarkers({number: tram_lines[n], markerColor: colors[tram_lines[n]]}) }).addTo(mymap);
-
-                              markers.push(marker1);
-                              n+=1;
-
-                                }
+                     for (var i = 0; i < markers.length; i++) {
+                         mymap.removeLayer(markers[i]);
                      }
-                     else if ( type.localeCompare("path") == 0 ){
 
-                        coordinates_of_path = data.coordinates;
+                     n = 0
+                     while (n < tram_lines.length){
 
-                        for (var i = 0; i < paths.length; i++) {
-                              mymap.removeLayer(paths[i]);
-                              }
+                         var b = 0;
+                         list = [];
+                         list = data[tram_lines[n]];
 
-                        path = L.polyline(coordinates_of_path,{
-                        color : 'red'
-                        }).addTo(mymap);
-
-                        paths.push(path);
-
-
+                         marker1 = L.marker([list[1],list[0]],{icon: new L.AwesomeNumberMarkers({number: tram_lines[n], markerColor: colors[tram_lines[n]]}) }).addTo(mymap);
+                         markers.push(marker1);
+                         n+=1;
                      }
-                     else if ( type.localeCompare("nodes_to_break") == 0 ){
-                      console.log("sent nodes to break");
+                 }
 
-                       nodes = data.coordinates;
+                 else if ( type.localeCompare("path") == 0 ){
 
-                        for (var i = 0; i < circles.length; i++) {
-                              mymap.removeLayer(circles[i]);
-                              }
+                     coordinates_of_path = data.coordinates;
 
+                     for (var i = 0; i < paths.length; i++) {
+                         mymap.removeLayer(paths[i]);
+                     }
 
-                        for (var i = 0; i < nodes.length; i++) {
+                     path = L.polyline(coordinates_of_path,{color : 'red'}).addTo(mymap);
+                     paths.push(path);
 
-                        var circleOptions = {
+                 }
+
+                 else if ( type.localeCompare("nodes_to_break") == 0 ){
+
+                      nodes = data.coordinates;
+
+                      for (var i = 0; i < circles.length; i++) {
+                          mymap.removeLayer(circles[i]);
+                      }
+
+                      for (var i = 0; i < nodes.length; i++) {
+
+                         var circleOptions = {
                          color : 'red',
                          fillColor : '#f03',
                          fillOpacity : 0
-                        }
+                         }
 
                          circle = L.circle([nodes[i][0], nodes[i][1]],15,circleOptions).addTo(mymap);
-                        circles.push(circle);
+                         circles.push(circle);
 
-                        }
-
-
-
-                     }
-                      else if ( type.localeCompare("loading") == 0 ){
+                      }
+                 }
+                 else if ( type.localeCompare("loading") == 0 ){
                       console.log("loading");
 
 
-                     }
-                      else if ( type.localeCompare("ready") == 0 ){
+                 }
+                 else if ( type.localeCompare("ready") == 0 ){
                        console.log("ready")
                        window.location.reload();
 
-                     }
-                      else if ( type.localeCompare("update") == 0 ){
+                 }
+
+                 else if ( type.localeCompare("update") == 0 ){
                        console.log("updatecomes")
                        window.location.reload();
 
-                     }
+                 }
 
-                      else if ( type.localeCompare("bus_lines") == 0 ){
-                       console.log("dostaje autobusy")
-                       console.log(data.lines);
-                       for(var i = 0 ; i< data.lines.length ; i++){
-
-                       /*tram_lines.indexOf(data.lines[i]) ===  -1 ?  tram_lines.push(data.lines[i]) : console.log("tramwaj istnieje");*/
+                 else if ( type.localeCompare("areas") == 0 ){
+                       console.log("dostaje obszary ")
+                       nodes = data.coordinates;
 
 
-
-
+                       for (var i = 0; i < circles.length; i++) {
+                              mymap.removeLayer(circles[i]);
                        }
 
 
-                     }
-                     else if ( type.localeCompare("areas") == 0 ){
-                       console.log("dostaje obszary ")
-                        nodes = data.coordinates;
+                       for (var i = 0; i < nodes.length; i++) {
 
+                            var circleOptions = {
+                             color : 'green',
+                             fillColor : '#f03',
+                             fillOpacity : 0
+                            }
 
-                        for (var i = 0; i < circles.length; i++) {
-                              mymap.removeLayer(circles[i]);
-                              }
-
-
-                        for (var i = 0; i < nodes.length; i++) {
-
-                        var circleOptions = {
-                         color : 'green',
-                         fillColor : '#f03',
-                         fillOpacity : 0
-                        }
-
-                         circle = L.circle(nodes[i],nodes[i][2],circleOptions).addTo(mymap);
-                        circles.push(circle);
-
-                        }
-
-
-
-
-                     }
-
-
-
-
+                            circle = L.circle(nodes[i],nodes[i][2],circleOptions).addTo(mymap);
+                            circles.push(circle);
+                       }
+                    }
 
                 })
 
             });
+
         }, 100);
 
-     </script>
+    </script>
 
-    </body>
-</html>
+{% endblock%}

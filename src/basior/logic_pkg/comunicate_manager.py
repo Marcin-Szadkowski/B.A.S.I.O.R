@@ -1,6 +1,14 @@
 class ComuinicateManager:
 
     """comunicates given to client"""
+
+    @staticmethod
+    def send_possible_delays():
+        info = {"type": "delays"}
+        delays = ["speed_1", "speed_2", "speed_3", "speed_4", "speed_5","speed_6","speed_7"]
+        info["delays"] = delays
+        return info
+
     @staticmethod
     def send_trams_coords(trams):
         info = {}
@@ -96,5 +104,13 @@ class ComuinicateManager:
         info = {}
         info["type"] = "get_tram_path"
         info["line"] = line
+
+        return info
+
+    @staticmethod
+    def send_delay(delay):
+        info = {}
+        info["type"] = "chosen_delay"
+        info["delay"] = delay
 
         return info

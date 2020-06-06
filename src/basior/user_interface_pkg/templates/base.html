@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>B.A.S.I.O.R</title>
+        <link rel="stylesheet" href="static/css/styles_kwjp.css" />
+         <link rel="stylesheet" href="static/css/styles_kwjp.css" />
+        {% block head %} {% endblock %}
+        <!-- script for silding into map div after load-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+         {% block style %} {% endblock %}
+
+
+
+    </head>
+    <body >
+         <header>
+            <h1>B.A.S.I.O.R</h1>
+        </header>
+
+
+
+          <div class="container" id = "container" style="width:100%;">
+
+            <p style = "color:white; font-size:20px;width:100%;">
+                Projekt Basior .
+            </p>
+
+
+              {% block body %} {% endblock %}
+
+        </div>
+
+        <div id="progressbar"></div>
+        <div id="scrollPath"></div>
+
+
+
+    <script type = "text/javascript">
+
+        <!-- script for animated bar-->
+
+        $(document).ready(function () {
+            // Handler for .ready() called.
+            $('html, body').animate({
+                scrollTop: $('#mapid').offset().top
+            }, 'slow');
+        });
+
+        let progress = document.getElementById('progressbar');
+        let totalHeight = document.body.scrollHeight - window.innerHeight;
+
+
+        window.onscroll = function(){
+            let progressHeight = (window.pageYOffset/totalHeight)*100;
+            progress.style.height = progressHeight + "%"
+        }
+
+
+     </script>
+    {% block script %} {% endblock %}
+
+    </body>
+</html>
