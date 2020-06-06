@@ -102,12 +102,18 @@ class LogicConnector(Thread):
             self.State = not self.State
         time.sleep(0.09)
 
+
+        if self.next_move is None:
+            self.next_move = ComuinicateManager.send_possible_delays()
+            self.State = not self.State
+
+        time.sleep(0.09)
+
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_update()
             self.State = not self.State
         time.sleep(0.09)
 
-        delay = 0.3
         while True:
 
             if self.next_move is None:

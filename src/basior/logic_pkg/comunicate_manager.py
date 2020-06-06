@@ -51,14 +51,6 @@ class ComuinicateManager:
 
         return info
 
-    @staticmethod
-    def nodes_to_break():
-        info = {}
-        info["type"] = "nodes_to_break"
-        cors = [[51.08751, 17.03653, 20], [51.10983, 17.07739, 50], [51.12244, 17.01267, 200], [51.11209, 17.01353, 10]]
-        info["coordinates"] = cors
-        return info
-
     """comunicates given to server  """
 
     @staticmethod

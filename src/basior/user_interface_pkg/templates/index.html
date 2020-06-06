@@ -1,12 +1,11 @@
 
+<!-- main html file than extends  base.html form  -->
 {%extends 'base.html' %}
 
 {% block head %}
+    <!-- needed links to work with map, leaflet, and styles for tram markers -->
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
     <link rel="stylesheet" href="static/css/number_markers.css" />
-
-
-         <!-- LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
        crossorigin=""/>
@@ -16,22 +15,6 @@
      </script>
 
 
-    <!-- END LEAFLET -->
-    <styles>
-     .leaflet-div-icon {
-            background: transparent;
-            border: none;
-        }
-
-        .leaflet-marker-icon .number{
-            position: relative;
-            top: -37px;
-            font-size: 12px;
-            width: 25px;
-            text-align: center;
-        }
-
-    </styles>
 
 {% endblock %}
 
@@ -39,22 +22,29 @@
 
 {% block body %}
 
-
+    <!-- form that support getting requests from html to python methods -->
     <form method="POST">
 
+                 <!--dropdown containing delay options of simulation -->
                  <select name="delays" id="select_delay" onchange="set_val()" >
                      {% for del in delays %}
                          <option name="option_delay" id="option_delay" value="{{ del }}">{{ del }}</option>
                      {% endfor %}
                  </select>
 
-
+                <!-- input and button to sign the delay changes -->
                 <input name="text3" id ="text3">
                 <button type="submit" name="submit_delay">Submit</button>
+
+                <!-- button that loads MANUAL page -->
                 <button type="submit" name="submit_manual" >load manual page </button>
 
-                <div id="mapid" style ="width:96%; height:700px"></div>
 
+                <!-- div contains mapbox form to prezent simulation-->
+                <div id="mapid" style ="width:95%; height:850px"></div>
+
+
+                <!-- input and button to sign communication node to destroy -->
                 <input name="text" id ="clicked_coordinates">
                 <button type="submit" name="submit_destroy">Submit</button>
 
@@ -64,6 +54,7 @@
                     {% endfor %}
                 </select>
 
+                <!-- input and button to sign the path o chosen tram -->
                 <input name="text2" id ="text2">
                 <button type="submit" name="submit_route">Submit</button>
 
@@ -73,217 +64,185 @@
 {% block script %}
 
     <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <!-- script to use color markers for trams -->
     <script src="static/js/number_markers.js"></script>
+
+    <!-- script handle map events based on server communicates-->
     <script>
 
-
-        $(document).ready(function () {
-            // Handler for .ready() called.
-            $('html, body').animate({
-                scrollTop: $('#mapid').offset().top
-            }, 'slow');
-        });
-
-
-        $(function(){
-            $("#select_delay").change(function(){
-
-            var display = $("#select_delay option:selected").text();
-            $("#text3").val(display);
-
-            })
-        })
-
-         $(function(){
-            $("#select").change(function(){
-
-            var display = $("#select option:selected").text();
-            $("#text2").val(display);
-
-            })
-        })
-
-
-         /* losowanie koloru dla markera reprezentujacego tramwaj*/
-
-        function pickRandomColor(){
-              var colors = ['red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpuple', 'cadetblue'];
-              return colors[Math.floor(Math.random() * colors.length)];
-        }
-
-        var mymap = L.map('mapid').setView([51.107883, 17.038538], 13);
-
-
-
-        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-                maxZoom: 18,
-                id: 'mapbox/streets-v11',
-                tileSize: 512,
-                zoomOffset: -1,
-                accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thOXpxMm5yMG5pczM0czl6ZXh1NzlwMSJ9.G-GetrXxvkISp-NNHQS4sA'
-        }).addTo(mymap);
-
-        var tram_lines = [];
-        var colors = {};
-        var markers = [];
-        mapMarkers1 = [];
-        mapMarkers3 = [];
-        var circles=[];
-        var paths = [];
-
-
-        mymap.on('click', function(e){
-            var coord = e.latlng;
-            var lat = coord.lat;
-            var lng = coord.lng;
-            document.getElementById("clicked_coordinates").value=toString(lat);
-        });
-
-
-        /* script thats passes chosen coordinates into textfield*/
-
-        mymap.on('click',function(e){
-                    var coord = e.latlng.toString().split(',');
-                    var lat = coord[0].split('(');
-                    var lng = coord[1].split(')');
-                    document.getElementById("clicked_coordinates").value=  + lat[1]+","+ lng[0] ;
-        });
-
-
-        setInterval(() => {
-        fetch("{{ url_for('time_feed') }}")
-        .then(response => {
-                response.text().then(t => {
-
-
-                 /* unpack tramLines data*/
-
-                 var list = '{{tramList}}';
-                 var res = list.split('&#39;');
-                 res.pop();
-                 res.splice(0,1);
-                 for(var i = res.length-1;i--;){
-                 if(res[i] == ', ')res.splice(i,1);
-                 }
-                 res.splice(0,1);
-
-                 tram_lines = res;
-
-
-                 for(var i = 0; i< tram_lines.length; i++){
-
-                    if( colors[tram_lines[i]] == undefined){
-
-                         colors[tram_lines[i]] = pickRandomColor();
-                    }
-                 }
-
-                 var data=JSON.parse(JSON.parse(t))
-                 var type = data.type
-
-
-                 /* rysowanie kolejnych wspolrzednych tramwajow*/
-
-                 if ( type.localeCompare("tram") == 0 ){
-
-
-                     for (var i = 0; i < markers.length; i++) {
-                         mymap.removeLayer(markers[i]);
-                     }
-
-                     n = 0
-                     while (n < tram_lines.length){
-
-                         var b = 0;
-                         list = [];
-                         list = data[tram_lines[n]];
-
-                         marker1 = L.marker([list[1],list[0]],{icon: new L.AwesomeNumberMarkers({number: tram_lines[n], markerColor: colors[tram_lines[n]]}) }).addTo(mymap);
-                         markers.push(marker1);
-                         n+=1;
-                     }
-                 }
-
-                 else if ( type.localeCompare("path") == 0 ){
-
-                     coordinates_of_path = data.coordinates;
-
-                     for (var i = 0; i < paths.length; i++) {
-                         mymap.removeLayer(paths[i]);
-                     }
-
-                     path = L.polyline(coordinates_of_path,{color : 'red'}).addTo(mymap);
-                     paths.push(path);
-
-                 }
-
-                 else if ( type.localeCompare("nodes_to_break") == 0 ){
-
-                      nodes = data.coordinates;
-
-                      for (var i = 0; i < circles.length; i++) {
-                          mymap.removeLayer(circles[i]);
-                      }
-
-                      for (var i = 0; i < nodes.length; i++) {
-
-                         var circleOptions = {
-                         color : 'red',
-                         fillColor : '#f03',
-                         fillOpacity : 0
-                         }
-
-                         circle = L.circle([nodes[i][0], nodes[i][1]],15,circleOptions).addTo(mymap);
-                         circles.push(circle);
-
-                      }
-                 }
-                 else if ( type.localeCompare("loading") == 0 ){
-                      console.log("loading");
-
-
-                 }
-                 else if ( type.localeCompare("ready") == 0 ){
-                       console.log("ready")
-                       window.location.reload();
-
-                 }
-
-                 else if ( type.localeCompare("update") == 0 ){
-                       console.log("updatecomes")
-                       window.location.reload();
-
-                 }
-
-                 else if ( type.localeCompare("areas") == 0 ){
-                       console.log("dostaje obszary ")
-                       nodes = data.coordinates;
-
-
-                       for (var i = 0; i < circles.length; i++) {
-                              mymap.removeLayer(circles[i]);
-                       }
-
-
-                       for (var i = 0; i < nodes.length; i++) {
-
-                            var circleOptions = {
-                             color : 'green',
-                             fillColor : '#f03',
-                             fillOpacity : 0
-                            }
-
-                            circle = L.circle(nodes[i],nodes[i][2],circleOptions).addTo(mymap);
-                            circles.push(circle);
-                       }
-                    }
-
-                })
-
+            /* script to slide page into map section after reload */
+
+            $(document).ready(function () {
+                // Handler for .ready() called.
+                $('html, body').animate({
+                    scrollTop: $('#mapid').offset().top
+                }, 'slow');
             });
 
-        }, 100);
+
+            /* function that passes value of delay dropdown to textfield */
+
+            $(function(){
+                $("#select_delay").change(function(){
+
+                var display = $("#select_delay option:selected").text();
+                $("#text3").val(display);
+
+                })
+            })
+
+             $(function(){
+                $("#select").change(function(){
+
+                var display = $("#select option:selected").text();
+                $("#text2").val(display);
+
+                })
+            })
+
+
+             /* function selects color for marker that represents particular tram line */
+
+            function pickRandomColor(){
+                  var colors = ['red', 'darkred', 'orange', 'green', 'darkgreen', 'blue', 'purple', 'darkpuple', 'cadetblue'];
+                  return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+
+            /* initialize map object */
+
+            var mymap = L.map('mapid').setView([51.107883, 17.038538], 13);
+
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                    maxZoom: 18,
+                    id: 'mapbox/streets-v11',
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    accessToken: 'pk.eyJ1IjoibmVycWEiLCJhIjoiY2thOXpxMm5yMG5pczM0czl6ZXh1NzlwMSJ9.G-GetrXxvkISp-NNHQS4sA'
+            }).addTo(mymap);
+
+
+            /* arrays that store data abaout simulation */
+
+            var tram_lines = [];
+            var colors = {};
+            var markers = [];
+            var paths = [];
+
+
+             /* method that stores geographical coordinates of chosen place on map , passes them into  textfield*/
+
+            mymap.on('click',function(e){
+                        var coord = e.latlng.toString().split(',');
+                        var lat = coord[0].split('(');
+                        var lng = coord[1].split(')');
+                        document.getElementById("clicked_coordinates").value=  + lat[1]+","+ lng[0] ;
+            });
+
+
+            /*  function that updates map based on fetched information from python client.  */
+            setInterval(() => {
+            fetch("{{ url_for('time_feed') }}")
+            .then(response => {
+                    response.text().then(t => {
+
+
+
+                     /* unpack tramLines data*/
+
+                     var list = '{{tramList}}';
+                     var res = list.split('&#39;');
+                     res.pop();
+                     res.splice(0,1);
+                     for(var i = res.length-1;i--;){
+                     if(res[i] == ', ')res.splice(i,1);
+                     }
+                     res.splice(0,1);
+                     tram_lines = res;
+
+
+                     /* based on  tramlines gui gets add colors to markers if not added before*/
+
+                     for(var i = 0; i< tram_lines.length; i++){
+
+                        if( colors[tram_lines[i]] == undefined){
+
+                             colors[tram_lines[i]] = pickRandomColor();
+                        }
+                     }
+
+
+                     /* unpack data and type od comunicate from client . var t represents string that was passed from client */
+
+                     var data=JSON.parse(JSON.parse(t))
+                     var type = data.type
+
+                     /* conditional statements to handle communicates of given type */
+
+
+                     /* updating trams position */
+
+                     if ( type.localeCompare("tram") == 0 ){
+
+
+                         for (var i = 0; i < markers.length; i++) {
+                             mymap.removeLayer(markers[i]);
+                         }
+                         n = 0
+                         while (n < tram_lines.length){
+
+                             var b = 0;
+                             list = [];
+                             list = data[tram_lines[n]];
+
+                             marker1 = L.marker([list[1],list[0]],{icon: new L.AwesomeNumberMarkers({number: tram_lines[n], markerColor: colors[tram_lines[n]]}) }).addTo(mymap);
+                             markers.push(marker1);
+                             n+=1;
+                         }
+                     }
+
+                     /*drawing tram path iff needed*/
+
+                     else if ( type.localeCompare("path") == 0 ){
+
+                         coordinates_of_path = data.coordinates;
+
+                         for (var i = 0; i < paths.length; i++) {
+                             mymap.removeLayer(paths[i]);
+                         }
+
+                         path = L.polyline(coordinates_of_path,{color : 'red'}).addTo(mymap);
+                         paths.push(path);
+
+                     }
+
+                     /*handle loading communicate*/
+
+                     else if ( type.localeCompare("loading") == 0 ){
+                          console.log("loading");
+
+
+                     }
+
+                     /*handle ready communicate */
+                     else if ( type.localeCompare("ready") == 0 ){
+                           console.log("ready")
+                           window.location.reload();
+
+                     }
+
+                     else if ( type.localeCompare("update") == 0 ){
+                           console.log("updatecomes")
+                           window.location.reload();
+
+                     }
+
+                    })
+
+                });
+
+            }, 100);
 
     </script>
 
