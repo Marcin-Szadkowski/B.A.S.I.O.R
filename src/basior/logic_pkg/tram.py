@@ -10,6 +10,7 @@ class Tram:
         self.current_route = TramLine(number, direction_to, dl)  # Defaul tram route (to loop)
         self.reverse_route = TramLine(number, reverse_direction, dl)  # Route from tram loop
         self.route_iterator = RouteIterator(self.current_route.current_route)
+        self.temp_path = self.current_route.current_route
         self.is_halted = False
 
     # Returns next coordinates of tram route or 'LOOP' if tram is on a loop
@@ -35,6 +36,7 @@ class Tram:
             # If tram is on substitute route then apply it. Sometimes if damage does not infuence tram route
             # bypass is equal to current tram route, but it is handled in the same way as bypass route
             idx = self.get_point_coords(temp_route, cur_coords)
+            self.temp_path = temp_route
             new_route = LineString(temp_route.coords[idx:])  # We start from current tram coords
             self.route_iterator.apply_new_route(new_route)
             self.is_halted = False

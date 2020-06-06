@@ -38,8 +38,8 @@ class ComuinicateManager:
     def send_path(trams, number):
         info = {"type": "path"}
 
-        x = trams[int(number)].current_route.current_route.xy[0]
-        y = trams[int(number)].current_route.current_route.xy[1]
+        x = trams[int(number)].temp_path.xy[0]
+        y = trams[int(number)].temp_path.xy[1]
 
         cors = []
 

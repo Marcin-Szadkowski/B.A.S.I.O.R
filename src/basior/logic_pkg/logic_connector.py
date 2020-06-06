@@ -39,9 +39,7 @@ class LogicConnector(Thread):
         message = json.loads(json.dumps(message))
         if message["type"] == 'destroy':  # If message "destroy" is obtained from client
             self.damage_route(message["coordinates"])  # check how client actions affect tram routes
-            if self.next_move is None:
-                self.next_move = ComuinicateManager.send_path(self.trams, "2")
-                self.State = not self.State
+
         elif message["type"] == 'get_tram_path':
             for tram in self.trams:
                 if tram.number == json.loads(json.dumps(message))["line"]:
@@ -53,11 +51,7 @@ class LogicConnector(Thread):
         elif type == 'chosen_delay':
             self.delay = self.get_delay(json.loads(json.dumps(message))["delay"])
 
-           # print(self.path)
-
-
-
-
+        # print(self.path)
 
     # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
     def get_state(self):
@@ -73,8 +67,7 @@ class LogicConnector(Thread):
 
         return json.dumps(temp)
 
-
-    def get_delay(self,speed_string):
+    def get_delay(self, speed_string):
         if speed_string == "speed_1":
             return 2;
         elif speed_string == "speed_2":
@@ -92,8 +85,6 @@ class LogicConnector(Thread):
         else:
             return 0.2;
 
-
-
     # Method that sends tram coordinates every x seconds to client
 
     def run(self):
@@ -101,7 +92,6 @@ class LogicConnector(Thread):
             self.next_move = ComuinicateManager.send_tram_lines(self.trams)
             self.State = not self.State
         time.sleep(0.09)
-
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_possible_delays()
@@ -130,8 +120,7 @@ class LogicConnector(Thread):
 
             time.sleep(self.delay)
 
-
-# Method to check how deleting edges influences tram routes and takes care of it
+    # Method to check how deleting edges influences tram routes and takes care of it
     def damage_route(self, coords):
         self.can_fix = False
         self.city_graph.remove_edge(coords, 350)
