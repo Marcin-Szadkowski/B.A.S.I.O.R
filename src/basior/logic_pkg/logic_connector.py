@@ -39,9 +39,7 @@ class LogicConnector(Thread):
         message = json.loads(json.dumps(message))
         if message["type"] == 'destroy':  # If message "destroy" is obtained from client
             self.damage_route(message["coordinates"])  # check how client actions affect tram routes
-            if self.next_move is None:
-                self.next_move = ComuinicateManager.send_path(self.trams, "2")
-                self.State = not self.State
+
         elif message["type"] == 'get_tram_path':
             for tram in self.trams:
                 if tram.number == json.loads(json.dumps(message))["line"]:
