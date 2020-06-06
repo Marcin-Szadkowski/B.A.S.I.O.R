@@ -24,7 +24,7 @@ class DataLoader(object):
         """
         self.gdf = gpd.read_file(self.all_lines_data)
         self.gdf_stops = self.gdf[(self.gdf.public_transport == "stop_position")]
-        self.graph = G = ox.load_graphml(self.folder_of_graph)
+        self.graph = ox.load_graphml(self.folder_of_graph)
 
     def load_single_line(self, line_number, direction_to, return_type="LINESTRING"):
         """
