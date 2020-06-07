@@ -51,8 +51,9 @@ class Tram:
 
     @staticmethod
     def get_point_coords(line, point):  # Function is used to get index of point if one is in list, else return False
+        """
         for i in range(len(line.coords)):
             if line.coords[i] == tuple(point):
                 return i
-
-        return False
+        """
+        return list(line.coords).index(tuple(point))

@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiLineString
 from .route_iterator import RouteIterator
+from .graphconverter import GraphConverter
 
 
 class TramLine(object):
     """Class represents single tram line for example '33: from Pilczyce to Sępolno' """
 
-    def __init__(self, number, direction_to, reverse_direction, dl, is_reversed=False):
+    def __init__(self, number, direction_to, dl):
         """
         Basic requirements to unambiguously define line
         :param number: number of line as str
