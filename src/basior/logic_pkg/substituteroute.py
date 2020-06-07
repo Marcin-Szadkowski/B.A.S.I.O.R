@@ -19,7 +19,8 @@ class SubstituteRoute:
         # find weak components (because graph is directed)
         weak_components = [list(s) for s in nx.weakly_connected_components(sub_graph)]
         route = tram_line.route_in_order
-
+        if len(weak_components) == 1:
+            return tram_line.default_route
         place_dict = dict()
         for k in weak_components:
             if k[0] in route:
