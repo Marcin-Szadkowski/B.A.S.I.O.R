@@ -1,7 +1,10 @@
+import math
 import networkx as nx
 import osmnx as ox
 import numpy as np
+import itertools
 import sys
+from tools_pkg.mapper_data_loader import MapDataLoader
 from shapely.geometry import Point, LineString, Polygon, MultiLineString
 from shapely import ops
 
@@ -18,7 +21,7 @@ class GraphModifier:
         :param G: MultiDiGraph
         :return: MultiDiGraph after reduction
         """
-        G = G.copy()
+        G = nx.MultiDiGraph(G)
         # Find all nodes of deg=4 that should be deleted
         red_nodes = [node for node in G.nodes() if nx.degree(nx.to_undirected(G), node, weight=1) == 4]
         red_nodes = [node for node in G.nodes(data=True) if node[0] in red_nodes]
@@ -70,7 +73,7 @@ class GraphModifier:
                     multi_line = MultiLineString(multi_line)
                     # Finally merge them
                     merged_line = ops.linemerge(multi_line)
-                    # There is one (meybe more) edges that can't be merged because they are not contiguous
+                    # There is one (meybe more) edge that can't be merged because they are not contiguous
                     if isinstance(merged_line, LineString):
                         edge_attributes['geometry'] = merged_line
                     # So if they are not contiguous ops.linemerge() returns MultiLineString
@@ -105,14 +108,11 @@ class GraphModifier:
         :param graph: directed MultiDiGraph
         :return: list of correct paths to add, single path represents correct edge that will be added to graph,
         """
-        # We need undirected graph to define undirected neighbors
+        # We can use undirected graph to define undirected neighbors
         un_graph = nx.Graph(graph)
         un_graph = nx.to_undirected(un_graph)
         # Define undirected neighbors
         un_neighbors = set(un_graph.neighbors(node[0]))
-        # There is an exception - some nodes are of deg()=4, but have less than 4 neighbors
-        if len(un_neighbors) < 4:
-            return None
         # Define directed neighbors
         di_neighbors = set(graph.neighbors(node[0]))
         un_neighbors = un_neighbors.difference(di_neighbors)
@@ -162,8 +162,21 @@ class GraphModifier:
             except KeyError:
                 point1 = graph.nodes[edge1[0]]
                 point2 = graph.nodes[edge1[1]]
-                new_linestring = LineString([(point1['x'], point1['y'],), (point2['x'], point2['y'])])
+                new_linestring = LineString([(point1['x'], point1['y']), (point2['x'], point2['y'])])
                 edge1[2]['geometry'] = new_linestring
+
+    @staticmethod
+    def fix_edges_merge(graph):
+        for n in graph.nodes():
+            in_edges = list(graph.in_edges(n, data=True))
+            out_edges = list(graph.out_edges(n, data=True))
+            pairs = list(itertools.product(in_edges, out_edges))
+            for pair in pairs:
+                e1, e2 = pair[0], pair[1]
+                if e1[2]['geometry']. intersects(e2[2]['geometry']):
+                    new_geom = e1[2]['geometry'].difference(e2[2]['geometry'])
+                    if not new_geom.is_empty:
+                        e1[2]['geometry'] = new_geom
 
     @staticmethod
     def reduce_multiple_edges(graph):
@@ -195,11 +208,7 @@ class GraphModifier:
         termini = mdl.get_loop_data()
         # by default 'service' is 'rail'
         for e in graph.edges(data=True):
-            try:
-                if e[2]['service'] != 'yard':
-                    e[2]['service'] = 'rail'
-            except KeyError:
-                e[2]['service'] = 'rail'
+            e[2]['service'] = 'rail'
 
         for terminus in termini:
             e1, e2 = terminus[0], terminus[1]
@@ -210,7 +219,153 @@ class GraphModifier:
             if graph.has_edge(e2[0], e2[1], key=e2[2]):
                 graph[e2[0]][e2[1]][e2[2]]['service'] = 'terminus'
             else:
-                print("Warning: consider update of termini data")
+                print("Warning: consider update of termini data: ", terminus, file=sys.stderr)
+
+    @staticmethod
+    def connect(G):
+        """
+        Merge two edges into one
+        :param G: MultiDiGraph
+        """
+        mdl = MapDataLoader()
+        to_cnt = mdl.get_to_connect()
+        for c in to_cnt:
+            # c is a pair of edges
+            path = [c[0][0], c[0][1], c[1][1]]
+            edge_attributes = {}
+            for e in c:
+
+                # Note: new edge will be constructed out of exactly two edges
+                edge = G.edges[e[0], e[1], e[2]]
+                # Gather all properties of edges
+                for key in edge:
+                    if key in edge_attributes:
+                        # if this key already exists in the dict, append it to the
+                        # value list
+                        edge_attributes[key].append(edge[key])
+                    else:
+                        # if this key doesn't already exist, set the value to a list
+                        # containing the one value
+                        edge_attributes[key] = [edge[key]]
+                # Reduce gathered attributes to only unique values (except Length and geometry)
+            for key in edge_attributes:
+                # We have to flatten attributes because there are some situations where lists of attr includes lists
+                edge_attributes[key] = list(flatten(edge_attributes[key]))
+                # geometry and lengths are special treated
+                if not key == 'geometry' and len(set(edge_attributes[key])) == 1 and not key == 'length':
+                    # if there's only 1 unique value in this attribute list,
+                    # consolidate it to the single value (the zero-th)
+                    edge_attributes[key] = edge_attributes[key][0]
+                elif not key == 'length' and not key == 'geometry':
+                    # otherwise, if there are multiple values, keep one of each value
+                    edge_attributes[key] = list(set(edge_attributes[key]))
+                # We have to merge LineString geometries
+            if 'geometry' in edge_attributes:
+                multi_line = []
+                for line in edge_attributes['geometry']:
+                    multi_line.append(line)
+                multi_line = list(flatten(multi_line))  # cos some of edges have list of LineStrings as geometry
+                # Form MultiLineString of given LineString geometries
+                multi_line = MultiLineString(multi_line)
+                # Finally merge them
+                merged_line = ops.linemerge(multi_line)
+                # There is one (meybe more) edge that can't be merged because they are not contiguous
+                if isinstance(merged_line, LineString):
+                    edge_attributes['geometry'] = merged_line
+                # So if they are not contiguous ops.linemerge() returns MultiLineString
+                elif isinstance(merged_line, MultiLineString):
+                    # Here we gonna fix this by connect_lines method
+                    edge_attributes['geometry'] = connect_lines(merged_line)
+            else:
+                # If there is no geometry then simply add straight LineString between two nodes
+                edge_attributes['geometry'] = LineString([Point((G.nodes[node]['x'], G.nodes[node]['y']))
+                                                          for node in path])
+                # Sum length of edges in path
+            try:
+                edge_attributes['length'] = sum(edge_attributes['length'])
+            except KeyError:
+                # Not sure how many edges are relate to this exception
+                edge_attributes['length'] = 1
+                # Add new edge
+            G.add_edge(c[0][0], c[1][1], **edge_attributes)
+            # Remove redundant node
+        G.remove_node(c[0][1])
+
+    @staticmethod
+    def manual_merge(G, preproc=False):
+        """
+        Merge manually marked edges [(u, v), (v, w)][(p, v), (v, g)] -> (u, w), (p, g)
+        :param G: MultiDiGraph
+        :param preproc: if Ture then load data marked before simplify_to_tram_traffic() was performed
+        """
+        mdl = MapDataLoader()
+        if preproc:
+            to_mg = mdl.get_to_merge_preproc()
+        else:
+            to_mg = mdl.get_to_merge()
+        # We take four edges to replace them with 2 edges
+        for i in range(0, len(to_mg), 2):
+            # mg is a pair of edges
+            merged = [to_mg[i], to_mg[i+1]]
+            for mg in merged:
+                edge_attributes = {}
+                path = [mg[0][0], mg[0][1], mg[1][1]]
+                for e in mg:
+                    # Note: new edge will be constructed out of exactly two edges
+                    edge = G.edges[e[0], e[1], e[2]]
+                    # Gather all properties of edges
+                    for key in edge:
+                        if key in edge_attributes:
+                            # if this key already exists in the dict, append it to the
+                            # value list
+                            edge_attributes[key].append(edge[key])
+                        else:
+                            # if this key doesn't already exist, set the value to a list
+                            # containing the one value
+                            edge_attributes[key] = [edge[key]]
+                    # Reduce gathered attributes to only unique values (except Length and geometry)
+                for key in edge_attributes:
+                    # We have to flatten attributes because there are some situations where lists of attr includes lists
+                    edge_attributes[key] = list(flatten(edge_attributes[key]))
+                    # geometry and lengths are special treated
+                    if not key == 'geometry' and len(set(edge_attributes[key])) == 1 and not key == 'length':
+                        # if there's only 1 unique value in this attribute list,
+                        # consolidate it to the single value (the zero-th)
+                        edge_attributes[key] = edge_attributes[key][0]
+                    elif not key == 'length' and not key == 'geometry':
+                        # otherwise, if there are multiple values, keep one of each value
+                        edge_attributes[key] = list(set(edge_attributes[key]))
+                    # We have to merge LineString geometries
+                if 'geometry' in edge_attributes:
+                    multi_line = []
+                    for line in edge_attributes['geometry']:
+                        multi_line.append(line)
+                    multi_line = list(flatten(multi_line))  # cos some of edges have list of LineStrings as geometry
+                    # Form MultiLineString of given LineString geometries
+                    multi_line = MultiLineString(multi_line)
+                    # Finally merge them
+                    merged_line = ops.linemerge(multi_line)
+                    # There is one (meybe more) edge that can't be merged because they are not contiguous
+                    if isinstance(merged_line, LineString):
+                        edge_attributes['geometry'] = merged_line
+                    # So if they are not contiguous ops.linemerge() returns MultiLineString
+                    elif isinstance(merged_line, MultiLineString):
+                        # Here we gonna fix this by connect_lines method
+                        edge_attributes['geometry'] = connect_lines(merged_line)
+                else:
+                    # If there is no geometry then simply add straight LineString between two nodes
+                    edge_attributes['geometry'] = LineString([Point((G.nodes[node]['x'], G.nodes[node]['y']))
+                                                              for node in path])
+                    # Sum length of edges in path
+                try:
+                    edge_attributes['length'] = sum(edge_attributes['length'])
+                except KeyError:
+                    # Not sure how many edges are relate to this exception
+                    edge_attributes['length'] = 1
+                    # Add new edge
+                G.add_edge(mg[0][0], mg[1][1], **edge_attributes)
+            # Remove redundant node
+            G.remove_node(mg[0][1])
 
 
 def unit_vector(vector):

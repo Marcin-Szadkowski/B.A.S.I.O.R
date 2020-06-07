@@ -66,19 +66,29 @@ class DataLoader(object):
         """
         Function downloads data from osm as osmnx graph
         Then it fixes it's geomtry
-        Subseguently it removes redundant nodes
+        Subseguently it executes set of commands that will make work with graph more efficient
         :return: DataLoader object graph is up to date and after all necessary fixes
         """
         G = ox.graph_from_place('Wroclaw, Poland', network_type='drive',
                                 infrastructure='way["railway"~"tram"]', simplify=True)
         # Fix geometry
         GraphModifier.fix_edges_geometry(G)
+        # Perform merge of manually marked edges
+        GraphModifier.manual_merge(G, preproc=True)
         # Simplify for correct tram traffic
         G = GraphModifier.simplify_for_tram_traffic(G)
-        # Delete edges
+        # Merge manually mapped edges
+        GraphModifier.manual_merge(G)
+        G = GraphModifier.simplify_for_tram_traffic(G)
+        G = GraphModifier.simplify_for_tram_traffic(G)
+        # Fix edges geometry to prepare them to be merged
+        GraphModifier.fix_edges_merge(G)
+        # Deleted mapped edges
         GraphModifier.reduce_multiple_edges(G)
         # Add termini
         GraphModifier.add_termini(G)
+        # Connect manualy
+        GraphModifier.connect(G)
         # Finally save graph in specified location
         ox.save_graphml(G, "graph.graphml", folder=DataLoader.folder_of_graph)
         self.graph = G
