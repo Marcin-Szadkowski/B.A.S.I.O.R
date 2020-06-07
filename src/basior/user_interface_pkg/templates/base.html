@@ -1,3 +1,5 @@
+<!-- base html structure for application -->
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -13,29 +15,22 @@
          {% block style %} {% endblock %}
 
 
-
     </head>
-    <body >
+    <body>
          <header>
             <h1>B.A.S.I.O.R</h1>
         </header>
 
-
-
-          <div class="container" id = "container" style="width:100%;">
-
-            <p style = "color:white; font-size:20px;width:100%;">
-                Projekt Basior .
-            </p>
-
-
+         <div class="container" id = "container" style="width:100%;">
+             <p style = "color:white; font-size:20px;width:100%;">
+                B.A.S.I.O.R. Badanie adaptacji systemu i ograniczeń ruchu
+             </p>
+              <!-- insert additional body structure -->
               {% block body %} {% endblock %}
-
         </div>
 
         <div id="progressbar"></div>
         <div id="scrollPath"></div>
-
 
 
     <script type = "text/javascript">
@@ -58,8 +53,8 @@
             progress.style.height = progressHeight + "%"
         }
 
-
      </script>
+    <!-- insert additional scripts -->
     {% block script %} {% endblock %}
 
     </body>

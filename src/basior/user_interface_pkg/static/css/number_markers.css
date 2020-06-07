@@ -14,7 +14,7 @@
             text-align: center;
         }
 .awesome-number-marker {
-  background: url('markers.png') no-repeat 0 0;
+  background: url('static/img/markers.png') no-repeat 0 0;
   width: 35px;
   height: 46px;
   position:absolute;
