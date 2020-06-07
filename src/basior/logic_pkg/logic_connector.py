@@ -48,7 +48,7 @@ class LogicConnector(Thread):
         elif message["type"] == 'stop_showing_path':
             self.path = None
 
-        elif type == 'chosen_delay':
+        elif message["type"] == 'chosen_delay':
             self.delay = self.get_delay(json.loads(json.dumps(message))["delay"])
 
         # print(self.path)
@@ -69,21 +69,21 @@ class LogicConnector(Thread):
 
     def get_delay(self, speed_string):
         if speed_string == "speed_1":
-            return 2;
+            return 2
         elif speed_string == "speed_2":
-            return 1.5;
+            return 1.5
         elif speed_string == "speed_3":
-            return 1;
+            return 1
         elif speed_string == "speed_4":
-            return 0.8;
+            return 0.8
         elif speed_string == "speed_5":
-            return 0.5;
+            return 0.5
         elif speed_string == "speed_6":
-            return 0.2;
+            return 0.2
         elif speed_string == "speed_7":
-            return 0.1;
+            return 0.1
         else:
-            return 0.2;
+            return 0.2
 
     # Method that sends tram coordinates every x seconds to client
 
@@ -91,18 +91,18 @@ class LogicConnector(Thread):
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_tram_lines(self.trams)
             self.State = not self.State
-        time.sleep(0.09)
+        time.sleep(0.15)
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_possible_delays()
             self.State = not self.State
 
-        time.sleep(0.09)
+        time.sleep(0.15)
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_update()
             self.State = not self.State
-        time.sleep(0.09)
+        time.sleep(0.15)
 
         while True:
 

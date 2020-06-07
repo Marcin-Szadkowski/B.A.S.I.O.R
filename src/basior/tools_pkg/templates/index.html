@@ -1,3 +1,5 @@
+<!-- template from that extend base final_graph.html, containing addi-->
+
 {%extends 'final_graph.html' %}
 
 {% block style %}
@@ -10,38 +12,36 @@
                 }
 {% endblock %}
 {% block body %}
+
             <div id="panel" >
-                <form method="POST">
-                <label><input type ="checkbox" id = "checkbox_edge" value="delete_edge">delete_edge</label>
-                <label><input type ="checkbox"  id = "checkbox_loops"  value="make_loop">make_loop</label>
-                <div>
-                     <input name="text" id ="clicked_coordinates" style="width:80%;float:left;">
+                 <form method="POST">
+                 <label><input type ="checkbox" id = "checkbox_edge" value="delete_edge">delete_edge</label>
+                 <label><input type ="checkbox"  id = "checkbox_loops"  value="make_loop">make_loop</label>
+                 <p >EDGES TO DESTROY:</p>
+                 <input name="text" id ="clicked_coordinates" style="width:80%;float:left;">
 
-                </div>
-                 <div>
+                 <p style="float:left;clear:left;">DEFINE LOOPS:</p>
+                 <input name="text2" id ="tram_loops" style="width:80%;float:left;clear:left;">
+                 <button style="float:left;clear:left;" type="submit" name="submit">Submit</button>
+                 <p style="margin-top:20px;border:1px;float:left;clear:left; border-style:solid;" id="manual" onclick="get_manual()">CLICK HERE - more info </p>
 
-                    <input name="text2" id ="tram_loops" style="width:80%;float:left;">
-                 </div>
+                 </form>
 
-
-                <button type="submit" name="submit">Submit</button>
-                </form>
-                <div>
-                    <p></p>
-                </div>
             </div>
 {% endblock %}
 
 {% block script %}
+
+    <!-- variables that stores loops and edges do remove-->
     var coordinates_loops = []
     var coordinates_edges = []
 
-
+    <!--implementing mechanism to view chosen loops or edges in different text fields-->
     const checkbox_edge = document.getElementById('checkbox_edge')
 
     checkbox_edge.addEventListener('change', (event) => {
                   if (event.target.checked) {
-                    /*alert('Now choose edges to remove .  Remember to leave only one checkbox checked.');*/
+                    alert('Now choose edges to remove .  Remember to leave only one checkbox checked.');
                   } else {
                    coordinates_loops = []
                   }
@@ -51,11 +51,17 @@
 
     checkbox_loops.addEventListener('change', (event) => {
                   if (event.target.checked) {
-                    /*alert('Now choose loops to add. Remember to leave only one checkbox checked.If u want to clear loops, type "stop" in second field');*/
+                    alert('Now choose loops to add. Remember to leave only one checkbox checked.If u want to clear loops, type "stop" in second field');
                   } else {
                     coordinates_edges = []
                   }
     })
+
+
+    function get_manual(){
+                   alert('Firstly set interesting option in checkbox.Deletion of edge can by made on single edge. After submitting chosen nodes will be stored in edges.json file.(append to existing nodes in file)If u want to clear edges.json file content type "clear" in upper textfield.To visualize loop (remember to submit coordinates in pairs - forproject B.A.S.I.O.R purposes) check apropriate checkbox. After choosing loops (pairs of positions on map) click submit to visualize them in blue. You can stop showing loops by typing "stop" in second textfield.Loops are stored in tram_loops.json file. After submit new loops are appended to file.You can clear file if needed by typing "clear" in second textfield');
+    }
+
 
 
      map_id.on('click',function(e){
@@ -76,7 +82,7 @@
 
     });
 
-    /*there are injected loops created by user*/
+    <!--there are injected loops created by user-->
     {{string}}
 
 

@@ -6,6 +6,7 @@ import random
 
 
 class PolyLine_String(object):
+
     def __init__(self):
         self.polyline_string = ""
 
