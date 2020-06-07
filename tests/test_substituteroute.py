@@ -1,137 +1,58 @@
-from graphconverter import GraphConverter
-import networkx as nx
+from unittest import TestCase
+import unittest
+from random import randint
 import osmnx as ox
+from substituteroute import SubstituteRoute
+from graphconverter import GraphConverter
+from dataloader import DataLoader
+from tramline import TramLine
 
 
-class SubstituteRoute:
-
-    @staticmethod
-    def calculate_bypass(graph, tram_line):
-        omitted = []
-
-        line = tram_line.default_route
-        nodes = GraphConverter.line_to_nodes(graph, line)
-        # w ten sposob mamy subgraph, ktory dzieli informacje z orginalnym grafem
-        sub_graph = graph.subgraph(nodes)
-        # Powinno nie byc None ale nigdy nie wiadomo
-        if tram_line.route_in_order is None:
-            return
-
-        route = tram_line.route_in_order
-        # A tak powstaje nowy niezalezny graf
-        sub_graph = nx.Graph(sub_graph)
-
-        sub_graph = nx.to_undirected(sub_graph)
-        # Komponenty skladowe mozna liczyc tylko dla grafow nieskierowanych
-        # Te komponenty uporzadkujemy na podstawie route
-
-        components = list(nx.connected_components(sub_graph))  # list of sets
-        components = [list(component) for component in components]
-
-        place_dict = dict()
-        for k in components:
-            if k[0] in route:
-                place_dict[route.index(k[0])] = k
-        ordered_components = []
-        # Uporzadkowywanie spojnych skladowych w kolejnosci jak na trasie
-        for key in sorted(place_dict.keys()):
-            ordered_components.append(place_dict[key])
-
-        new_route = set()
-        # Tworzymy pary skladowych (k_n, k_n+1)
-        for k1, k2 in zip(ordered_components[:-1], ordered_components[1:]):
-            path = SubstituteRoute.connect_components(graph, k1, k2)
-            if path is None:
-                continue
-            new_route = new_route.union(set(path))
-            new_route = new_route.union(set(k1))
-            new_route = new_route.union(set(k2))
-        print(new_route)
-        # Po wykonanej wyzej operacji mozemy miec niepolaczone skladowe
-        # Teraz sprawdzmy, ktore skladowe zostaly niepodlaczone
-        for k in ordered_components:
-            # Jesli spojna skladowa i nowa trasa sa rozlaczne, to znaczy, ze nie udalo sie jej polaczyc
-            if not bool(new_route & set(k)):
-                #  Sprobujmy ja dolaczyc do nowej trasy
-                # Wezmy jakikolwiek wierzcholek z nowej trasy
-                try:
-                    node = next(iter(new_route))    # obsluzyc wyjatek gdy trasa jest pusta! ! !
-                except StopIteration:
-                    continue
-                # Moze sie tak zdazyc, ze ten wierzcholek nie jest w trasie
-                node_iter = iter(new_route)
-                while node not in route:
-                    try:
-                        node = next(node_iter)    # Szukamy takiego, ktory jest w oryginalnej trasie
-                    except StopIteration:
-                        continue  # W takim razie nie podlaczymy skladowej
-                path = None
-                if route.index(k[0]) < route.index(node):
-                    # To znaczy, ze skladowa jest przed polaczona nowa trasa
-                    # Musimy to rozrozniac ze wzgledu na wyznaczanie drogi w grafie skierowanym
-                    path = SubstituteRoute.connect_components(graph, k, new_route)
-                else:
-                    # Skladowa jest za polaczona trasa, laczymy nowa_trasa -> skladowa
-                    path = SubstituteRoute.connect_components(graph, new_route, k)
-                if path is None:
-                    continue
-                # Dolacz droge i skladowa
-                new_route = new_route.union(set(path))
-                new_route = new_route.union(set(k))
-
-        sub_graph = graph.subgraph(new_route)
-        # Szukamy najdluzszej sciezki, wynikiem bedzie graf liniowy (redukujemy rozne odnogi trasy)
-        # new_route = nx.dag_longest_path(sub_graph)
-        sub_graph = graph.subgraph(new_route)
-        print(new_route)
-        # Jezeli udalo sie znalezc jakas droge zastepcza
-        if new_route:
-            #  Musimy zredukowac slepe polaczenia zeby trasa jakos wygladala
-            if nx.is_directed_acyclic_graph(sub_graph):
-                # Then we can find the longest path
-                new_route = nx.dag_longest_path(sub_graph)
-                sub_graph = graph.subgraph(new_route)
-            else:
-                # We have to convert graph to DAG - Directed Acyclic Graph
-                sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
-                new_route = nx.dag_longest_path(sub_graph)
-                sub_graph = graph.subgraph(new_route)
-            # Finally make new LineString
-            tram_line.current_route = GraphConverter.route_to_line_string(sub_graph)
-
-    @staticmethod
-    def connect_components(graph, k1, k2):
-        min_length = 5000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
-        path = None
-        for v in k1:
-            for w in k2:
-                try:
-                    length = nx.shortest_path_length(graph, v, w, weight='length')
-                except nx.exception.NetworkXNoPath:
-                    continue
-                if length < min_length:
-                    path = nx.shortest_path(graph, v, w, weight='length')
-                    min_length = length
-        return path
-
-    @staticmethod
-    def convert_to_dag(graph):
+class TestSubstituteRoute(TestCase):
+    def test_calculate_bypass(self):
         """
-        Method tries to convert graph to Directed Acyclic Graph
-        Algorithm:
-            - find minimum spanning tree
-            - get attributes of all edges in tree
-            - build DiGraph from those edges
-        :param graph: MultiDiGraph, DiGraph
-        :return: Directed Acyclic Graph
+        Do:
+            - Foreach route delete at least one edge (could be random)
+            - calculate bypas for this route on modified graph
+        Expected:
+            - New route is displayed
+            - User manualy verifies whether new route is correct or not
         """
-        sub_graph = nx.MultiDiGraph(graph)
-        # Find spanning tree on undirected sub_graph (method works only for undirected graphs)
-        tree = nx.minimum_spanning_tree(sub_graph.to_undirected())
-        # To unambiguously identify edge in MultiDiGraph we have to use it`s dictionary
-        edges_dict = list(e[2] for e in tree.edges(data=True))
-        edges_from_graph = [e for e in graph.edges(data=True) if e[2] in edges_dict]
-        sub_graph = nx.DiGraph()
-        for e in edges_from_graph:
-            sub_graph.add_edge(e[0], e[1], **e[2])
-        return sub_graph
+        dl = DataLoader()
+        G = dl.graph
+        lines_table = dl.load_all_lines()
+
+        for line in lines_table:
+            # Create TramLine object
+            tram_line = TramLine(str(line[0]), line[1], dl)
+            tram_line.show()
+            # Convert line to nodes in order to verify graph before edges deletion
+            nodes = GraphConverter.line_to_nodes_precise(G, tram_line)
+            sub_graph = G.subgraph(nodes)
+            ox.plot_graph(sub_graph)
+            # Get stops on this line
+            stops = dl.load_tram_stops(tram_line.default_route)    # List of shapely objects
+            # Get random stops
+            # change range to increase or decrease number of deleted edges
+            r_stops = [stops[randint(0, len(stops)-1)] for i in range(3)]
+            # Get nearest edges and delete them
+            deleted_edges = list()
+            for stop in r_stops:
+                nr_edge = ox.get_nearest_edge(G, (stop.y, stop.x))
+                G.remove_edge(nr_edge[1], nr_edge[2])
+                deleted_edges.append(nr_edge)
+            # Show route without edges
+            sub_graph = G.subgraph(nodes)
+            ox.plot_graph(sub_graph)
+            # Now calculate bypas
+            tram_line.current_route = SubstituteRoute.calculate_bypass(G, tram_line)
+            print(type(tram_line.current_route))
+            tram_line.show()
+            for e in deleted_edges:
+                G.add_edge(e[1], e[2], geometry=e[0])
+        ox.plot_graph(G)
+        self.assertTrue(True)
+
+
+if __name__ == '__main__':
+    unittest.main()

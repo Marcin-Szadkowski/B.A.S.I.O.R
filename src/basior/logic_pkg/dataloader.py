@@ -75,6 +75,10 @@ class DataLoader(object):
         GraphModifier.fix_edges_geometry(G)
         # Simplify for correct tram traffic
         G = GraphModifier.simplify_for_tram_traffic(G)
+        # Delete edges
+        GraphModifier.reduce_multiple_edges(G)
+        # Add termini
+        GraphModifier.add_termini(G)
         # Finally save graph in specified location
         ox.save_graphml(G, "graph.graphml", folder=DataLoader.folder_of_graph)
         self.graph = G

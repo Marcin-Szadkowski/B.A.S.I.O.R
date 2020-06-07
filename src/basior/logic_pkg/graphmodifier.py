@@ -1,6 +1,7 @@
 import networkx as nx
 import osmnx as ox
 import numpy as np
+import sys
 from shapely.geometry import Point, LineString, Polygon, MultiLineString
 from shapely import ops
 
@@ -163,6 +164,53 @@ class GraphModifier:
                 point2 = graph.nodes[edge1[1]]
                 new_linestring = LineString([(point1['x'], point1['y'],), (point2['x'], point2['y'])])
                 edge1[2]['geometry'] = new_linestring
+
+    @staticmethod
+    def reduce_multiple_edges(graph):
+        """
+        Function deletes edges specified by tool from tools_pkg
+        It is used in preprocessing of the graph
+        :param graph:
+        :return:
+        """
+        mdl = MapDataLoader()
+        # edges to be deleted
+        del_edges = mdl.deleted_edges
+        for e in del_edges:
+            if graph.has_edge(e[0], e[1], key=e[2]):
+                graph.remove_edge(e[0], e[1], key=e[2])
+            else:
+                print("Warning: consider 'edges.json' update", file=sys.stderr)
+
+    @staticmethod
+    def add_termini(graph):
+        """
+        Functions adds an extra property to every edge`s dictionary
+        Based on information gathered by tool in tool_pkg edges
+        get 'terminus' as 'service' property
+        :param graph:
+        :return:
+        """
+        mdl = MapDataLoader()
+        termini = mdl.get_loop_data()
+        # by default 'service' is 'rail'
+        for e in graph.edges(data=True):
+            try:
+                if e[2]['service'] != 'yard':
+                    e[2]['service'] = 'rail'
+            except KeyError:
+                e[2]['service'] = 'rail'
+
+        for terminus in termini:
+            e1, e2 = terminus[0], terminus[1]
+            if graph.has_edge(e1[0], e1[1], key=e1[2]):
+                graph[e1[0]][e1[1]][e1[2]]['service'] = 'terminus'
+            else:
+                print("Warning: consider update of termini data")
+            if graph.has_edge(e2[0], e2[1], key=e2[2]):
+                graph[e2[0]][e2[1]][e2[2]]['service'] = 'terminus'
+            else:
+                print("Warning: consider update of termini data")
 
 
 def unit_vector(vector):

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
-from basior.logic_pkg.graphconverter import GraphConverter
 from shapely.geometry import MultiLineString
+from .route_iterator import RouteIterator
+from .graphconverter import GraphConverter
 
 
 class TramLine(object):

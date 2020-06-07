@@ -21,6 +21,7 @@ class SubstituteRoute:
         sub_graph = nx.to_undirected(sub_graph)
         # Komponenty skladowe mozna liczyc tylko dla grafow nieskierowanych
         # Te komponenty uporzadkujemy na podstawie route
+
         components = list(nx.connected_components(sub_graph))  # list of sets
         components = [list(component) for component in components]
         # jezeli trasa nie zostala rozspojniona to zwroc jego domyslna trase
@@ -100,7 +101,7 @@ class SubstituteRoute:
 
     @staticmethod
     def connect_components(graph, k1, k2):
-        min_length = 5000  # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
+        min_length = 5000   # Dzieki tej granicy nie bierzemy pod uwage dluzszych objazdow
         path = None
         for v in k1:
             for w in k2:
