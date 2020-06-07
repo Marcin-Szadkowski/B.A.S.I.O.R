@@ -93,20 +93,7 @@ class SubstituteRoute:
             else:
                 return SubstituteRoute.merge_lines(new_line)
         else:
-            longest_component = [c for c in sorted(weak_components, key=len, reverse=True)][0]
-            sub_graph = graph.subgraph(longest_component)
-            sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
-            path = list(nx.topological_sort(sub_graph))
-            path = SubstituteRoute.connect_to_termini(graph, path)
-            sub_graph = graph.subgraph(new_route)
-            sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
-            new_route = nx.dag_longest_path(sub_graph)
-            sub_graph = graph.subgraph(new_route)
-            new_line = GraphConverter.route_to_line_string(sub_graph)
-            if isinstance(new_line, LineString):
-                return new_line
-            else:
-                return None
+            return None
 
     @staticmethod
     def connect_to_termini(graph, route):
