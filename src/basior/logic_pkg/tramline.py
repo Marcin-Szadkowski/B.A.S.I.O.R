@@ -30,5 +30,4 @@ class TramLine(object):
             plt.plot(self.current_route.xy[0], self.current_route.xy[1])
         if with_stops:
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
-
         plt.show()

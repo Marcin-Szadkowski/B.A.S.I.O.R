@@ -131,15 +131,11 @@ class GraphConverter(object):
         :param graph: MultiDiGraph, DiGraph
         :return: LineString
         """
-        geometries = [e[2]['geometry'] for e in graph.edges(data=True)]
+        geometries = [e[2]['geometry'] for e in graph.edges(data=True) if e[2]['service'] != 'terminus']
         # Some edges have list as geometry
         geometries = list(flatten(geometries))
         # Form MultiLineString of given LineString geometries
         multi_line = MultiLineString(geometries)
         # Finally merge them
         merged_line = ops.linemerge(multi_line)
-        # merged_line = ops.unary_union(geometries)
-        if isinstance(merged_line, MultiLineString):
-            print("Warning: route can`t be merged", file=sys.stderr)
-            # merged_line = connect_lines(merged_line)
         return merged_line

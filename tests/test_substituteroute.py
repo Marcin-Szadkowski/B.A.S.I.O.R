@@ -19,6 +19,7 @@ class TestSubstituteRoute(TestCase):
             - User manualy verifies whether new route is correct or not
         """
         dl = DataLoader()
+        # dl.update_graph()
         G = dl.graph
         lines_table = dl.load_all_lines()
 
@@ -34,22 +35,24 @@ class TestSubstituteRoute(TestCase):
             stops = dl.load_tram_stops(tram_line.default_route)    # List of shapely objects
             # Get random stops
             # change range to increase or decrease number of deleted edges
-            r_stops = [stops[randint(0, len(stops)-1)] for i in range(3)]
+            r_stops = [stops[randint(0, len(stops)-1)] for i in range(2)]
             # Get nearest edges and delete them
             deleted_edges = list()
             for stop in r_stops:
                 nr_edge = ox.get_nearest_edge(G, (stop.y, stop.x))
-                G.remove_edge(nr_edge[1], nr_edge[2])
-                deleted_edges.append(nr_edge)
+                u, v = nr_edge[1], nr_edge[2]
+                key_del = max(G[u][v], key=int)
+                attr = G[u][v][key_del]
+                G.remove_edge(nr_edge[1], nr_edge[2], key=key_del)
+                deleted_edges.append([u, v, attr])
             # Show route without edges
             sub_graph = G.subgraph(nodes)
             ox.plot_graph(sub_graph)
             # Now calculate bypas
             tram_line.current_route = SubstituteRoute.calculate_bypass(G, tram_line)
-            print(type(tram_line.current_route))
             tram_line.show()
             for e in deleted_edges:
-                G.add_edge(e[1], e[2], geometry=e[0])
+                G.add_edge(e[0], e[1], **e[2])
         ox.plot_graph(G)
         self.assertTrue(True)
 
