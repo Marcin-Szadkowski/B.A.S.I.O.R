@@ -19,6 +19,7 @@ class LogicConnector(Thread):
         self.Loader = DataLoader()
         self.city_graph = CityGraph(self.Loader.graph)
         self.path = None
+        self.delay = self.get_delay("speed_5")
         self.load_data()
 
     # Load all trams specified in "data/lines_to_load.csv" and their routes (regular ones and reversed)
@@ -38,9 +39,7 @@ class LogicConnector(Thread):
         message = json.loads(json.dumps(message))
         if message["type"] == 'destroy':  # If message "destroy" is obtained from client
             self.damage_route(message["coordinates"])  # check how client actions affect tram routes
-            if self.next_move is None:
-                self.next_move = ComuinicateManager.send_path(self.trams, "2")
-                self.State = not self.State
+
         elif message["type"] == 'get_tram_path':
             for tram in self.trams:
                 if tram.number == json.loads(json.dumps(message))["line"]:
@@ -49,8 +48,14 @@ class LogicConnector(Thread):
         elif message["type"] == 'stop_showing_path':
             self.path = None
 
+        elif message["type"] == 'chosen_delay':
+            self.delay = self.get_delay(json.loads(json.dumps(message))["delay"])
+
+        # print(self.path)
+
     # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
     def get_state(self):
+
         return self.State
 
     # Used by ClientHandler to get changelog of simulation state in order to deliver it to Client
@@ -62,21 +67,43 @@ class LogicConnector(Thread):
 
         return json.dumps(temp)
 
+    def get_delay(self, speed_string):
+        if speed_string == "speed_1":
+            return 2
+        elif speed_string == "speed_2":
+            return 1.5
+        elif speed_string == "speed_3":
+            return 1
+        elif speed_string == "speed_4":
+            return 0.8
+        elif speed_string == "speed_5":
+            return 0.5
+        elif speed_string == "speed_6":
+            return 0.2
+        elif speed_string == "speed_7":
+            return 0.1
+        else:
+            return 0.2
+
     # Method that sends tram coordinates every x seconds to client
 
     def run(self):
-
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_tram_lines(self.trams)
             self.State = not self.State
-        time.sleep(0.09)
+        time.sleep(0.15)
+
+        if self.next_move is None:
+            self.next_move = ComuinicateManager.send_possible_delays()
+            self.State = not self.State
+
+        time.sleep(0.15)
 
         if self.next_move is None:
             self.next_move = ComuinicateManager.send_update()
             self.State = not self.State
-        time.sleep(0.09)
+        time.sleep(0.15)
 
-        delay = 0.3
         while True:
 
             if self.next_move is None:
@@ -91,7 +118,7 @@ class LogicConnector(Thread):
             if self.can_fix:
                 self.can_fix_routes()
 
-            time.sleep(delay)
+            time.sleep(self.delay)
 
     # Method to check how deleting edges influences tram routes and takes care of it
     def damage_route(self, coords):

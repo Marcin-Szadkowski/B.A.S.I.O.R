@@ -1,3 +1,4 @@
+/* style sheet of base html structure */
 
 html {
     margin: 0;
@@ -6,6 +7,7 @@ html {
     height: 100%;
     overflow: hidden;
     font-family: "Monument Extended", Arial, Helvetica, sans-serif;
+
 }
 
 body {
@@ -19,6 +21,8 @@ body {
     overflow-y: scroll;
     overflow-x: hidden;
     font-family: consolas;
+    font-size:20px;
+
     
 }
 
@@ -96,8 +100,10 @@ section h2
 }
 section p
 {
-    font-size: 1.2em;
-    color: #fff;
+    font-family: consolas;
+    font-size:25px !important;
+    width : 100%;
+    font-color: white !important;
 }
 
 ::-webkit-scrollbar

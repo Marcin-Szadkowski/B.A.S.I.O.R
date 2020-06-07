@@ -1,0 +1,68 @@
+
+<!--manual page html  -->
+
+{%extends 'base.html'%}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+
+<div class="wrapper">
+     <p style = "color:white; font-size:20px;width=90%;">
+         Simulation is mainly based on libraries osmnx, networkx, geopandas, leaflet, folium and flask framework.
+          Data such as tram routes and Wroclaw tramline graph structure are imported from OSM.
+          Based on data mentioned above application even increase amount of data by self-developed mapper
+          tool . Using tool we can define tram communication loops and check
+          behaviour of a tramline graph when edges deletion occurs. You can run mapper_app.py in tools_pkg.
+
+     </p>
+      <p style = "color:white; font-size:20px;width=90%;">
+
+          After starting application,process of loading data can take some time.
+          Application is ready to use when trams appear on the map.
+      </p>
+</div>
+
+<div class="wrapper">
+  <div class="first">
+    <img src="static/css/project_kwjp_delay.png"  width="95%" height="70%">
+      <p style = "color:white; font-size:20px;width=95%;">
+          Choose symulation speed in dropbox positioned above map and click submit.
+      </p>
+  </div>
+
+  <div class="second">
+    <div class="second-a">
+      <img src="static/css/project_kwjp_coors.png"  width="95%" height="70%">
+         <p style = "color:white; font-size:20px;width=95%;">
+               Tram line breaking simulation. To break tram's communication node, just choose apropriate coordinates by clicking on map and then submit.
+         </p>
+    </div>
+    <div class="second-b">
+       <img src="static/css/project_kwjp_line.png"  width="95%" height="70%">
+        <p style = "color:white; font-size:20px;width=95%;">
+           To clear the map, type "None" or choose "None" from dropdown.
+        </p>
+
+    </div>
+  </div>
+
+    <div class="first">
+     <img src="static/css/project_kwjp_stop.png"  width="95%" height="70%">
+        <p style = "color:white; font-size:20px;width=95%;">
+             To visualize  single tram route. Choose line from dropbox and click submit.
+        </p>
+
+
+  </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block script %}
+
+
+{% endblock %}
