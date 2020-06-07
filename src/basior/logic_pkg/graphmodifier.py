@@ -4,7 +4,7 @@ import osmnx as ox
 import numpy as np
 import itertools
 import sys
-from tools_pkg.mapper_data_loader import MapDataLoader
+from basior.tools_pkg.mapper_data_loader import MapDataLoader
 from shapely.geometry import Point, LineString, Polygon, MultiLineString
 from shapely import ops
 

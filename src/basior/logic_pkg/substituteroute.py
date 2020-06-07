@@ -1,4 +1,4 @@
-from graphconverter import GraphConverter
+from .graphconverter import GraphConverter
 import networkx as nx
 from shapely.geometry import LineString, MultiLineString
 import sys
