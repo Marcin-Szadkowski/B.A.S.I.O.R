@@ -80,11 +80,6 @@ class SubstituteRoute:
                 # We have to convert graph to DAG - Directed Acyclic Graph
                 sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
                 new_route = nx.dag_longest_path(sub_graph)
-                # sub_graph = graph.subgraph(new_route)
-            new_route = SubstituteRoute.connect_to_termini(graph, new_route)
-            sub_graph = graph.subgraph(new_route)
-            sub_graph = SubstituteRoute.convert_to_dag(sub_graph)
-            new_route = nx.dag_longest_path(sub_graph)
             sub_graph = graph.subgraph(new_route)
             # Finally make new LineString
             new_line = GraphConverter.route_to_line_string(sub_graph)
