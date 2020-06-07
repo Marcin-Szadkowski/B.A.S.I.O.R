@@ -25,7 +25,6 @@ class LogicConnector(Thread):
     def load_data(self):
         all_trams_data = self.Loader.load_all_lines()
 
-
         for i in range(0, len(all_trams_data), 2):
             self.trams.append(
                 Tram(str(all_trams_data[i][0]), str(all_trams_data[i][1]), str(all_trams_data[i + 1][1]),
@@ -47,15 +46,12 @@ class LogicConnector(Thread):
                 if tram.number == json.loads(json.dumps(message))["line"]:
                     self.path = self.trams.index(tram)
 
-
         elif message["type"] == 'stop_showing_path':
             self.path = None
-
 
     # Used by ClientHandler to determine if there is any change in game, which is supposed to be send to Client
     def get_state(self):
         return self.State
-
 
     # Used by ClientHandler to get changelog of simulation state in order to deliver it to Client
     def get_changes(self):
@@ -65,7 +61,6 @@ class LogicConnector(Thread):
         self.State = False if self.State is True else False
 
         return json.dumps(temp)
-
 
     # Method that sends tram coordinates every x seconds to client
 
@@ -81,7 +76,7 @@ class LogicConnector(Thread):
             self.State = not self.State
         time.sleep(0.09)
 
-        delay = 0.2
+        delay = 0.3
         while True:
 
             if self.next_move is None:
@@ -119,7 +114,3 @@ class LogicConnector(Thread):
                 if tram.is_halted:
                     temp_route = SubstituteRoute.calculate_bypass(self.city_graph.graph, tram.current_route)
                     tram.apply_bypass(temp_route)
-
-
-
-
