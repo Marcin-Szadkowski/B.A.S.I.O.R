@@ -21,8 +21,6 @@ class TramLine(object):
         self.current_route = self.default_route
         self.route_in_order = GraphConverter.find_route_in_order(dl, self)
 
-
-"""
     def show(self, with_stops=True):
         # Development tool. Plot line
         if isinstance(self.current_route, MultiLineString):
@@ -34,4 +32,3 @@ class TramLine(object):
             plt.scatter([p.x for p in self.stops], [p.y for p in self.stops])
 
         plt.show()
-"""
